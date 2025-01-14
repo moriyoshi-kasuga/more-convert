@@ -1,0 +1,27 @@
+[package]
+name = "more-convert"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+readme = "../README.md"
+categories.workspace = true
+keywords.workspace = true
+
+[lib]
+
+[features]
+default = []
+
+[dependencies]
+more-convert-derive = { version = "0", path = "../more-convert-derive" }
+
+cfg-if.workspace = true
+syn.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true
