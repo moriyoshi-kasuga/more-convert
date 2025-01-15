@@ -1,3 +1,6 @@
+mod enum_repr;
+pub use enum_repr::*;
+
 use syn::Type;
 
 pub(crate) fn require_named_field_struct(
