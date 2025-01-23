@@ -36,7 +36,7 @@ pub fn derive_enum_repr(input: syn::DeriveInput) -> syn::Result<TokenStream> {
                     discriminant: prev_discriminant,
                 });
 
-                for variant in variants {
+                for variant in iter {
                     let discriminant = match variant.discriminant.as_ref() {
                         Some((_, expr)) => {
                             syn::parse2::<LitInt>(expr.to_token_stream())?.base10_parse::<u16>()?
@@ -69,10 +69,26 @@ fn derive_enum_repr_internal(
     let ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
+    let (idents, discriminants): (Vec<_>, Vec<_>) = fields
+        .into_iter()
+        .map(|v| (v.ident, v.discriminant))
+        .unzip();
+
     let token = quote::quote! {
         impl #impl_generics From<#ident> for #repr #ty_generics #where_clause {
             fn from(value: #ident) -> Self {
                 value as #repr
+            }
+        }
+
+        impl #impl_generics TryFrom<#repr> for #ident #ty_generics #where_clause {
+            type Error = String;
+
+            fn try_from(value: #repr) -> Result<Self, Self::Error> {
+                Ok(match value {
+                    #(#discriminants => Self::#idents,)*
+                    _ => return Err(format!(concat!("invalid ", stringify!(#ident), ": {}"), value)),
+                })
             }
         }
     };
