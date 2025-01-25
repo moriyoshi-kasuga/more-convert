@@ -1,6 +1,9 @@
 mod enum_repr;
 pub use enum_repr::*;
 
+mod convert;
+pub use convert::*;
+
 use syn::Type;
 
 pub(crate) fn require_named_field_struct(
@@ -30,9 +33,17 @@ pub(crate) fn require_enum(
     }
 }
 
+pub(crate) fn is_vec(ty: &Type) -> bool {
+    is_type_eq_ident(ty, "Vec")
+}
+
 pub(crate) fn is_option(ty: &Type) -> bool {
+    is_type_eq_ident(ty, "Option")
+}
+
+pub(crate) fn is_type_eq_ident<S: AsRef<str>>(ty: &Type, s: S) -> bool {
     match get_last_path_segment(ty) {
-        Some(seg) => seg.ident == "Option",
+        Some(seg) => seg.ident == s,
         _ => false,
     }
 }

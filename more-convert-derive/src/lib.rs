@@ -10,3 +10,8 @@ macro_rules! use_internal {
 pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_enum_repr, input)
 }
+
+#[proc_macro_derive(Convert, attributes(convert))]
+pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    use_internal!(more_convert_derive_internal::derive_convert, input)
+}
