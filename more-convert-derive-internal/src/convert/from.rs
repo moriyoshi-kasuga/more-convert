@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::Ident;
 
-use super::args::{ConvertFieldArgs, ConvertFieldMap};
+use super::args::ConvertFieldArgs;
 
 pub(crate) fn gen_from(
     input: &syn::DeriveInput,
@@ -20,20 +20,7 @@ pub(crate) fn gen_from(
                 Some(v) => Ident::new(&v.value(), v.span()).into_token_stream(),
                 None => v.ident.to_token_stream(),
             };
-            let token: TokenStream = {
-                match v.map {
-                    ConvertFieldMap::Map(map) => map.into_token_stream(),
-                    ConvertFieldMap::FieldFn(map) => quote! {
-                        #map(value.#ident)
-                    },
-                    ConvertFieldMap::StructFn(map) => quote! {
-                        #map(&value)
-                    },
-                    ConvertFieldMap::Suffix(suffix) => quote! {
-                        value.#ident #suffix
-                    },
-                }
-            };
+            let token = v.map.into_token(&ident);
             (v.ident, token)
         })
         .unzip();

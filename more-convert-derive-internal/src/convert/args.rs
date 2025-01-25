@@ -1,4 +1,5 @@
 use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated, spanned::Spanned, Expr, ExprPath, Field, Ident, Lit, LitStr, Meta,
     MetaList, Token, Type,
@@ -32,6 +33,23 @@ pub(crate) enum ConvertFieldMap {
     FieldFn(ExprPath),
     StructFn(ExprPath),
     Suffix(TokenStream),
+}
+
+impl ConvertFieldMap {
+    pub(crate) fn into_token(self, ident: &TokenStream) -> TokenStream {
+        match self {
+            ConvertFieldMap::Map(map) => map.into_token_stream(),
+            ConvertFieldMap::FieldFn(map) => quote! {
+                #map(value.#ident)
+            },
+            ConvertFieldMap::StructFn(map) => quote! {
+                #map(&value)
+            },
+            ConvertFieldMap::Suffix(suffix) => quote! {
+                value.#ident #suffix
+            },
+        }
+    }
 }
 
 pub(crate) struct ConvertFieldArgs<'a> {
