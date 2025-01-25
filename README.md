@@ -1,4 +1,4 @@
-# [more-convert][docsrs]: more-convert utilities
+# [more-convert][docsrs]: more convert utilities
 
 [![more-convert on crates.io][cratesio-image]][cratesio]
 [![more-convert on docs.rs][docsrs-image]][docsrs]
@@ -72,7 +72,7 @@ assert_eq!(a.a, 1u16);
 assert_eq!(a.b, 2u16);
 ```
 
-more `Into` examples are [here](./more-convert/tests/from/)
+more `Into` examples are [here](./more-convert/tests/from/)  
 more `From` examples are [here](./more-convert/tests/into/)
 
 ## License
