@@ -12,7 +12,8 @@ pub enum Test {
 fn test(origin: u16, v: Test) {
     let num: u16 = v.into();
     assert_eq!(origin, num);
-    assert_eq!(v, num.try_into().unwrap());
+    let test: Test = num.try_into().unwrap();
+    assert_eq!(v, test);
 }
 
 #[test]
