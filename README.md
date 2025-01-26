@@ -16,7 +16,7 @@ This crate provides utilities for convert
 
 - `EnumRepr` automatically implements `TryFrom` and `Into` for enums
   - Ideal for managing Type, etc.
-  - Example: [test code](./more-convert/tests/enum_repr.rs)
+  - Example: [test code](./more-convert/tests/enum_repr/normal.rs)
 - `Convert` automatically implements `From` or `Into` for named structs
   - Leave the very cumbersome From and Into implementations to us!
   - Example From: [from's test code](./more-convert/tests/from/normal.rs)
