@@ -16,17 +16,8 @@ fn test(origin: u16, v: Test) {
     assert_eq!(v, test);
 }
 
-#[test]
-fn first() {
+pub fn main() {
     test(0, Test::First);
-}
-
-#[test]
-fn three() {
     test(3, Test::Three);
-}
-
-#[test]
-fn four() {
     test(4, Test::Four);
 }

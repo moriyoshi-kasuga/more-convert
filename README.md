@@ -26,6 +26,9 @@ This crate provides utilities for convert
 
 ### EnumRepr
 
+- enum_attributes
+  - serde: automatically implements `serde::Serialize` and `serde::Deserialize`
+
 ```rust
 use more_convert::EnumRepr;
 
@@ -45,6 +48,14 @@ assert_eq!(3u16.try_into(), Ok(Test::Three));
 ```
 
 ### Convert
+
+- field_attributes
+  - ignore: skip the field
+  - rename: rename the field
+  - map
+    - map: map of expr
+    - map_field: map of field
+    - map_struct: map of struct
 
 ```rust
 use more_convert::Convert;

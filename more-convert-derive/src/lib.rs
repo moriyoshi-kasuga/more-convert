@@ -6,7 +6,7 @@ macro_rules! use_internal {
     };
 }
 
-#[proc_macro_derive(EnumRepr)]
+#[proc_macro_derive(EnumRepr, attributes(enum_repr))]
 pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_enum_repr, input)
 }
