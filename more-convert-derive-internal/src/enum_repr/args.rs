@@ -55,14 +55,17 @@ impl EnumReprOption {
         let mut option = EnumReprOption::default();
         let metas = attr.parse_args_with(Punctuated::<Path, Comma>::parse_terminated)?;
         for meta in metas {
-            if meta.is_ident("serde") {
-                option.serde = true;
-                continue;
+            match meta.get_ident() {
+                Some(ident) if ident == "serde" => {
+                    option.serde = true;
+                }
+                _ => {
+                    return Err(syn::Error::new(
+                        meta.span(),
+                        "unrecognized enum repr option",
+                    ));
+                }
             }
-            return Err(syn::Error::new(
-                meta.span(),
-                "unrecognized enum repr option",
-            ));
         }
         Ok(option)
     }

@@ -2,20 +2,23 @@ mod args;
 
 use crate::require_enum;
 use args::{EnumReprField, EnumReprOption};
-use proc_macro2::{Span, TokenStream};
-use syn::{spanned::Spanned, Ident};
+use proc_macro2::TokenStream;
+use quote::format_ident;
+use syn::spanned::Spanned;
 
 pub fn derive_enum_repr(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let variants = require_enum(&input)?;
     let mut repr: Option<(TokenStream, Vec<EnumReprField>)> = None;
     let mut option: Option<EnumReprOption> = None;
     for attr in &input.attrs {
-        if attr.path().is_ident("repr") {
-            repr = Some((attr.parse_args()?, EnumReprField::from_variants(variants)?));
-            continue;
-        }
-        if attr.path().is_ident("enum_repr") {
-            option = Some(EnumReprOption::from_attr(attr)?);
+        match attr.path().get_ident() {
+            Some(ident) if ident == "repr" => {
+                repr = Some((attr.parse_args()?, EnumReprField::from_variants(variants)?));
+            }
+            Some(ident) if ident == "enum_repr" => {
+                option = Some(EnumReprOption::from_attr(attr)?);
+            }
+            _ => {}
         }
     }
     match repr {
@@ -32,7 +35,6 @@ fn derive_enum_repr_internal(
     fields: Vec<EnumReprField>,
     repr: TokenStream,
 ) -> syn::Result<TokenStream> {
-    let _ = fields;
     let ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
@@ -61,8 +63,7 @@ fn derive_enum_repr_internal(
     };
 
     if option.serde {
-        let serde = format!("serialize_{}", repr);
-        let serde = Ident::new(&serde, Span::call_site());
+        let serde = format_ident!("serialize_{}", repr.to_string());
         token.extend(quote::quote! {
             impl serde::Serialize for #ident {
                 fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
