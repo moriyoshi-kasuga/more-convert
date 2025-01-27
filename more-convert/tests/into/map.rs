@@ -3,6 +3,8 @@ use more_convert::Convert;
 #[derive(Convert)]
 #[convert(into(B))]
 pub struct A {
+    // value's type is `A`
+    // The reason for the `value` is because of the From trait's args
     #[convert(map = value.map.to_string())]
     map: u8,
     #[convert(map_field = map_field)]
