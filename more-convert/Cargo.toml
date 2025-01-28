@@ -15,6 +15,7 @@ keywords.workspace = true
 
 [features]
 default = []
+utils = []
 
 [dependencies]
 more-convert-derive = { version = "0", path = "../more-convert-derive" }
