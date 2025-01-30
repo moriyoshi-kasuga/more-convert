@@ -7,7 +7,10 @@ pub(crate) struct EnumReprField {
 }
 
 impl EnumReprField {
-    pub(crate) fn from_variants(variants: &Punctuated<Variant, Comma>) -> syn::Result<Vec<Self>> {
+    pub(crate) fn from_variants(
+        option: &EnumReprOption,
+        variants: &Punctuated<Variant, Comma>,
+    ) -> syn::Result<Vec<Self>> {
         let mut fields = Vec::with_capacity(variants.len());
         let mut iter = variants.iter();
 
@@ -19,7 +22,19 @@ impl EnumReprField {
             Some((_, expr)) => {
                 syn::parse2::<LitInt>(expr.to_token_stream())?.base10_parse::<u16>()?
             }
-            None => 0,
+            None => {
+                if !option.implicit {
+                    return Err(syn::Error::new(
+                        variant.span(),
+                        concat!(
+                            "expected explicit ",
+                            "(add #[enum_repr(implicit)] to enum attribute ",
+                            "if you want it implicit)",
+                        ),
+                    ));
+                }
+                0
+            }
         };
 
         fields.push(EnumReprField {
@@ -32,7 +47,19 @@ impl EnumReprField {
                 Some((_, expr)) => {
                     syn::parse2::<LitInt>(expr.to_token_stream())?.base10_parse::<u16>()?
                 }
-                None => prev_discriminant + 1,
+                None => {
+                    if !option.implicit {
+                        return Err(syn::Error::new(
+                            variant.span(),
+                            concat!(
+                                "expected explicit ",
+                                "(add #[enum_repr(implicit)] to enum attribute ",
+                                "if you want it implicit)",
+                            ),
+                        ));
+                    }
+                    prev_discriminant + 1
+                }
             };
             prev_discriminant = discriminant;
             fields.push(EnumReprField {
@@ -48,6 +75,7 @@ impl EnumReprField {
 #[derive(Default)]
 pub(crate) struct EnumReprOption {
     pub serde: bool,
+    pub implicit: bool,
 }
 
 impl EnumReprOption {
@@ -58,6 +86,9 @@ impl EnumReprOption {
             match meta.get_ident() {
                 Some(ident) if ident == "serde" => {
                     option.serde = true;
+                }
+                Some(ident) if ident == "implicit" => {
+                    option.implicit = true;
                 }
                 _ => {
                     return Err(syn::Error::new(

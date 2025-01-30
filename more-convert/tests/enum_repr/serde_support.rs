@@ -4,9 +4,9 @@ use more_convert::EnumRepr;
 #[repr(u16)]
 #[enum_repr(serde)]
 pub enum Test {
-    First,
+    First = 1,
     Three = 3,
-    Four,
+    Four = 4,
 }
 
 #[cfg(test)]
@@ -18,7 +18,7 @@ fn test(origin: u16, v: Test) {
 }
 
 pub fn main() {
-    test(0, Test::First);
+    test(1, Test::First);
     test(3, Test::Three);
     test(4, Test::Four);
 }

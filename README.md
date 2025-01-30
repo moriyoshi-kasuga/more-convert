@@ -34,16 +34,17 @@ use more_convert::EnumRepr;
 
 #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 #[repr(u16)]
+#[enum_repr(implicit)]
 pub enum Test {
-    First,
+    Zero,
     Three = 3,
     Four,
 }
 
-assert_eq!(0u16, Test::First.into());
+assert_eq!(0u16, Test::Zero.into());
 assert_eq!(3u16, Test::Three.into());
 
-assert_eq!(0u16.try_into(), Ok(Test::First));
+assert_eq!(0u16.try_into(), Ok(Test::Zero));
 assert_eq!(3u16.try_into(), Ok(Test::Three));
 ```
 

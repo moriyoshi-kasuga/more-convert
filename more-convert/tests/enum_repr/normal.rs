@@ -2,8 +2,9 @@ use more_convert::EnumRepr;
 
 #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 #[repr(u16)]
+#[enum_repr(implicit)]
 pub enum Test {
-    First,
+    Zero,
     Three = 3,
     Four,
 }
@@ -17,7 +18,7 @@ fn test(origin: u16, v: Test) {
 }
 
 pub fn main() {
-    test(0, Test::First);
+    test(0, Test::Zero);
     test(3, Test::Three);
     test(4, Test::Four);
 }

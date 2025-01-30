@@ -8,12 +8,12 @@ use syn::spanned::Spanned;
 
 pub fn derive_enum_repr(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let variants = require_enum(&input)?;
-    let mut repr: Option<(TokenStream, Vec<EnumReprField>)> = None;
+    let mut repr: Option<TokenStream> = None;
     let mut option: Option<EnumReprOption> = None;
     for attr in &input.attrs {
         match attr.path().get_ident() {
             Some(ident) if ident == "repr" => {
-                repr = Some((attr.parse_args()?, EnumReprField::from_variants(variants)?));
+                repr = Some(attr.parse_args()?);
             }
             Some(ident) if ident == "enum_repr" => {
                 option = Some(EnumReprOption::from_attr(attr)?);
@@ -22,8 +22,10 @@ pub fn derive_enum_repr(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         }
     }
     match repr {
-        Some((repr, fields)) => {
-            derive_enum_repr_internal(&input, option.unwrap_or_default(), fields, repr)
+        Some(repr) => {
+            let option = option.unwrap_or_default();
+            let fields = EnumReprField::from_variants(&option, variants)?;
+            derive_enum_repr_internal(&input, option, fields, repr)
         }
         None => Err(syn::Error::new(input.span(), "expected `repr` attribute")),
     }
