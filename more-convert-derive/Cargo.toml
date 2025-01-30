@@ -19,5 +19,8 @@ more-convert-derive-internal = { version = "0", path = "../more-convert-derive-i
 
 syn.workspace = true
 
+[dev-dependencies]
+more-convert = { version = "0", path = "../more-convert" }
+
 [lints]
 workspace = true
