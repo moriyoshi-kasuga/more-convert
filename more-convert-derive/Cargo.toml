@@ -22,5 +22,8 @@ syn.workspace = true
 [dev-dependencies]
 more-convert = { version = "0", path = "../more-convert" }
 
+serde = "1.0"
+serde_json = "1.0"
+
 [lints]
 workspace = true

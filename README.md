@@ -33,7 +33,7 @@ This crate provides utilities for convert
 use more_convert::EnumRepr;
 
 #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
-#[repr(u16)]
+#[repr(u8)]
 #[enum_repr(implicit)]
 pub enum Test {
     Zero,
@@ -41,11 +41,13 @@ pub enum Test {
     Four,
 }
 
-assert_eq!(0u16, Test::Zero.into());
-assert_eq!(3u16, Test::Three.into());
+assert_eq!(0u8, Test::Zero.into());
+assert_eq!(3u8, Test::Three.into());
+assert_eq!(4u8, Test::Four.into());
 
-assert_eq!(0u16.try_into(), Ok(Test::Zero));
-assert_eq!(3u16.try_into(), Ok(Test::Three));
+assert_eq!(0u8.try_into(), Ok(Test::Zero));
+assert_eq!(3u8.try_into(), Ok(Test::Three));
+assert_eq!(4u8.try_into(), Ok(Test::Four));
 ```
 
 ### Convert
@@ -64,8 +66,8 @@ use more_convert::Convert;
 #[derive(Convert)]
 #[convert(from(B))]
 pub struct A {
-    pub a: u16,
-    pub b: u16,
+    pub a: u8,
+    pub b: u8,
 }
 
 pub struct B {
@@ -80,8 +82,8 @@ let b = B {
 
 let a: A = b.into();
 
-assert_eq!(a.a, 1u16);
-assert_eq!(a.b, 2u16);
+assert_eq!(a.a, 1u8);
+assert_eq!(a.b, 2u8);
 ```
 
 more `Into` examples are [here](./more-convert/tests/from/)  
