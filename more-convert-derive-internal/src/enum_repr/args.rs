@@ -3,7 +3,7 @@ use syn::{punctuated::Punctuated, spanned::Spanned, token::Comma, Ident, LitInt,
 
 pub(crate) struct EnumReprField {
     pub ident: Ident,
-    pub discriminant: u16,
+    pub discriminant: LitInt,
 }
 
 impl EnumReprField {
@@ -19,9 +19,7 @@ impl EnumReprField {
             .ok_or_else(|| syn::Error::new(variants.span(), "expected at least one variant"))?;
 
         let mut prev_discriminant = match variant.discriminant.as_ref() {
-            Some((_, expr)) => {
-                syn::parse2::<LitInt>(expr.to_token_stream())?.base10_parse::<u16>()?
-            }
+            Some((_, expr)) => syn::parse2::<LitInt>(expr.to_token_stream())?,
             None => {
                 if !option.implicit {
                     return Err(syn::Error::new(
@@ -33,20 +31,18 @@ impl EnumReprField {
                         ),
                     ));
                 }
-                0
+                LitInt::new("0", variant.span())
             }
         };
 
         fields.push(EnumReprField {
             ident: variant.ident.clone(),
-            discriminant: prev_discriminant,
+            discriminant: prev_discriminant.clone(),
         });
 
         for variant in iter {
             let discriminant = match variant.discriminant.as_ref() {
-                Some((_, expr)) => {
-                    syn::parse2::<LitInt>(expr.to_token_stream())?.base10_parse::<u16>()?
-                }
+                Some((_, expr)) => syn::parse2::<LitInt>(expr.to_token_stream())?,
                 None => {
                     if !option.implicit {
                         return Err(syn::Error::new(
@@ -58,10 +54,18 @@ impl EnumReprField {
                             ),
                         ));
                     }
-                    prev_discriminant + 1
+                    LitInt::new(
+                        &(prev_discriminant
+                            .base10_digits()
+                            .parse::<u128>()
+                            .map_err(|err| syn::Error::new(variant.span(), err))?
+                            + 1)
+                        .to_string(),
+                        variant.span(),
+                    )
                 }
             };
-            prev_discriminant = discriminant;
+            prev_discriminant = discriminant.clone();
             fields.push(EnumReprField {
                 ident: variant.ident.clone(),
                 discriminant,
