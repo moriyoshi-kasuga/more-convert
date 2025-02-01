@@ -6,7 +6,7 @@ macro_rules! use_internal {
     };
 }
 
-/// automatically implements [`std::convert::From`] and [`std::convert::Into`] for enums
+/// Automatically implements [`std::convert::From`] and [`std::convert::Into`] for repr on enums.
 ///
 /// # Where to use:
 ///  - Managing Type
