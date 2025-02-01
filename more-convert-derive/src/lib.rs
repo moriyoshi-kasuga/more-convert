@@ -101,6 +101,128 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     use_internal!(more_convert_derive_internal::derive_enum_repr, input)
 }
 
+/// Automatically implements [`std::convert::From`] and [`std::convert::Into`] for repr on structs.
+///
+/// # Who uses it:
+///   - When you are using the architectural
+///   - Those who find the implementation of from and into cumbersome.
+///
+/// # Struct Attribute:
+///   - group of convert: (Choose one of these)
+///     - into: `impl From<#self> for #into_struct { /* auto gen */}`
+///     - from: `impl From<#from_struct> for #self { /* auto gen */}`
+///
+/// # Field Attribute:
+///   - ignore: ignore this field
+///   - rename: rename this field
+///   - group of map: map this field (Choose one of these)
+///     - map: replace expr
+///     - map_field: Process and pass field data
+///     - map_struct: Create data from struct references
+///
+/// # Examples
+///
+/// ## Normal
+///
+/// ```rust
+/// use more_convert::Convert;
+/// #[derive(Convert)]
+/// #[convert(into(B))]
+/// pub struct A {
+///     pub normal: u8,
+///     // auto into of inner
+///     pub opt: Option<u8>,
+///     // auto into of inner
+///     pub vec: Vec<u8>,
+/// }
+///
+/// pub struct B {
+///     normal: u16,
+///     opt: Option<u16>,
+///     vec: Vec<u16>,
+/// }
+///
+/// let a = A {
+///     normal: 0u8,
+///     opt: Some(1u8),
+///     vec: vec![2u8, 3u8],
+/// };
+///
+/// let b: B = a.into();
+///
+/// assert_eq!(b.normal, 0u16);
+/// assert_eq!(b.opt, Some(1u16));
+/// assert_eq!(b.vec, vec![2u16, 3u16]);
+/// ```
+///
+/// ## Reanem
+///
+/// ```rust
+/// use more_convert::Convert;
+/// #[derive(Convert)]
+/// #[convert(into(B))]
+/// pub struct A {
+///     #[convert(rename = "sample")]
+///     hey: String,
+/// }
+///
+/// pub struct B {
+///     sample: String,
+/// }
+///
+/// let a = A {
+///     hey: "hello".to_string(),
+/// };
+///
+/// let b: B = a.into();
+///
+/// assert_eq!(b.sample, "hello");
+/// ```
+///
+/// ## Map
+///
+/// ```rust
+/// use more_convert::Convert;
+/// #[derive(Convert)]
+/// #[convert(into(B))]
+/// pub struct A {
+///     // value's type is `A`
+///     // The reason for the `value` is because of the From trait's args
+///     #[convert(map = value.map.to_string())]
+///     map: u8,
+///     #[convert(map_field = map_field)]
+///     map_field: u8,
+///     #[convert(map_struct = map_struct)]
+///     map_struct: u8,
+/// }
+///
+/// fn map_field(map_field: u8) -> String {
+///     map_field.to_string()
+/// }
+///
+/// fn map_struct(a: &A) -> String {
+///     a.map_struct.to_string()
+/// }
+///
+/// pub struct B {
+///     map: String,
+///     map_field: String,
+///     map_struct: String,
+/// }
+///
+/// let a = A {
+///     map: 1,
+///     map_field: 2,
+///     map_struct: 3,
+/// };
+///
+/// let b: B = a.into();
+///
+/// assert_eq!(b.map, "1");
+/// assert_eq!(b.map_field, "2");
+/// assert_eq!(b.map_struct, "3");
+/// ```
+///
 #[proc_macro_derive(Convert, attributes(convert))]
 pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_convert, input)
