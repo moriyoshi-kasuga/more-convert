@@ -14,6 +14,7 @@ pub struct B {
     sample: u8,
 }
 
+#[test]
 pub fn main() {
     let b = B { sample: 1 };
     let a: A = b.into();

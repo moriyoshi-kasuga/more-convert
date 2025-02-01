@@ -17,8 +17,14 @@ fn test(origin: u16, v: Test) {
     assert_eq!(v, test);
 }
 
+#[test]
 pub fn main() {
     test(1, Test::First);
     test(3, Test::Three);
     test(4, Test::Four);
+
+    assert_eq!(
+        serde_json::from_str::<Test>("0").unwrap_err().to_string(),
+        String::from("invalid Test: 0")
+    );
 }

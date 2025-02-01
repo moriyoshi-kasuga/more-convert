@@ -11,6 +11,7 @@ pub struct B {
     sample: String,
 }
 
+#[test]
 pub fn main() {
     let a = A {
         hey: "hello".to_string(),

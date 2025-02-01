@@ -12,6 +12,7 @@ pub struct B {
     sample: u8,
 }
 
+#[test]
 pub fn main() {
     let a = A { sample: 1, hey: 2 };
 

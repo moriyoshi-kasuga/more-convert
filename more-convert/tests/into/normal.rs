@@ -16,6 +16,7 @@ pub struct B {
     vec: Vec<u16>,
 }
 
+#[test]
 pub fn main() {
     let a = A {
         normal: 0,

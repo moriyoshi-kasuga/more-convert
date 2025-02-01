@@ -27,6 +27,7 @@ pub struct B {
     map_struct: String,
 }
 
+#[test]
 pub fn main() {
     let a = A {
         map: 1,

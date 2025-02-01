@@ -17,8 +17,14 @@ fn test(origin: u16, v: Test) {
     assert_eq!(v, test);
 }
 
+#[test]
 pub fn main() {
     test(0, Test::Zero);
     test(3, Test::Three);
     test(4, Test::Four);
+
+    assert_eq!(
+        TryInto::<Test>::try_into(1u16).unwrap_err(),
+        String::from("invalid Test: 1")
+    );
 }

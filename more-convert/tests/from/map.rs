@@ -27,6 +27,7 @@ pub struct B {
     map_struct: u8,
 }
 
+#[test]
 pub fn main() {
     let b = B {
         map: 1,
