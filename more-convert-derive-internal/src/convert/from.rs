@@ -1,40 +1,24 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::ToTokens;
 use syn::Ident;
 
 use super::args::ConvertFieldArgs;
 
-pub(crate) fn gen_from(
-    input: &syn::DeriveInput,
-    from_ident: Ident,
-    fields: Vec<ConvertFieldArgs>,
-) -> syn::Result<TokenStream> {
-    let ident = &input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-
-    let (idents, tokens): (Vec<_>, Vec<_>) = fields
-        .into_iter()
+pub(crate) fn process_from(
+    fields: &Vec<ConvertFieldArgs>,
+) -> syn::Result<(Vec<TokenStream>, Vec<TokenStream>)> {
+    let result: (Vec<_>, Vec<_>) = fields
+        .iter()
         .filter(|v| !v.ignore)
         .map(|v| {
-            let ident = match v.rename {
+            let ident = match &v.rename {
                 Some(v) => Ident::new(&v.value(), v.span()).into_token_stream(),
                 None => v.ident.to_token_stream(),
             };
-            let token = v.map.into_token(&ident);
-            (v.ident, token)
+            let token = v.map.to_token(&ident);
+            (v.ident.into_token_stream(), token)
         })
         .unzip();
 
-    let token = quote! {
-        impl #impl_generics std::convert::From<#from_ident> for #ident #ty_generics #where_clause {
-            fn from(value: #from_ident) -> Self {
-                Self {
-                    #(
-                        #idents: #tokens,
-                    )*
-                }
-            }
-        }
-    };
-    Ok(token)
+    Ok(result)
 }

@@ -1,6 +1,6 @@
 use args::{ConvertArgs, ConvertFieldArgs};
 use proc_macro2::TokenStream;
-use syn::spanned::Spanned;
+use syn::{spanned::Spanned, Ident, ImplGenerics, TypeGenerics, WhereClause};
 
 use crate::require_named_field_struct;
 
@@ -10,6 +10,7 @@ mod into;
 
 pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let fields = require_named_field_struct(&input)?;
+
     let attr = 'bar: {
         for attr in &input.attrs {
             if attr.path().is_ident("convert") {
@@ -30,8 +31,39 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         .map(ConvertFieldArgs::from_field)
         .collect::<syn::Result<Vec<_>>>()?;
 
-    match struct_args {
-        ConvertArgs::From(ident) => from::gen_from(&input, ident, fields),
-        ConvertArgs::Into(ident) => into::gen_into(ident, &input, fields),
+    let generics = input.generics.split_for_impl();
+
+    match &struct_args {
+        ConvertArgs::From(ident) => Ok(gen_convert(
+            &generics,
+            &input.ident,
+            ident,
+            &from::process_from(&fields)?,
+        )),
+        ConvertArgs::Into(ident) => Ok(gen_convert(
+            &generics,
+            ident,
+            &input.ident,
+            &into::process_into(&fields)?,
+        )),
+    }
+}
+
+pub(crate) fn gen_convert(
+    (impl_generics, ty_generics, where_clause): &(ImplGenerics, TypeGenerics, Option<&WhereClause>),
+    into_ident: &Ident,
+    from_ident: &Ident,
+    (idents, tokens): &(Vec<TokenStream>, Vec<TokenStream>),
+) -> TokenStream {
+    quote::quote! {
+        impl #impl_generics std::convert::From<#from_ident> for #into_ident #ty_generics #where_clause {
+            fn from(value: #from_ident) -> Self {
+                Self {
+                    #(
+                        #idents: #tokens,
+                    )*
+                }
+            }
+        }
     }
 }

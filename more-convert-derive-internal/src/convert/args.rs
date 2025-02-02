@@ -36,9 +36,9 @@ pub(crate) enum ConvertFieldMap {
 }
 
 impl ConvertFieldMap {
-    pub(crate) fn into_token(self, ident: &TokenStream) -> TokenStream {
+    pub(crate) fn to_token(&self, ident: &TokenStream) -> TokenStream {
         match self {
-            ConvertFieldMap::Map(map) => map.into_token_stream(),
+            ConvertFieldMap::Map(map) => map.to_token_stream(),
             ConvertFieldMap::FieldFn(map) => quote! {
                 #map(value.#ident)
             },
