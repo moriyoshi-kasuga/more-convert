@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, Expr, ExprPath, Field, Ident, Lit, LitStr, Meta,
-    MetaList, Token, Type,
+    braced, parenthesized, punctuated::Punctuated, spanned::Spanned, token::Paren, Expr, ExprPath,
+    Field, Ident, Lit, LitStr, Meta, MetaList, Token, Type,
 };
 
 use crate::{is_option, is_vec};
@@ -13,16 +13,33 @@ pub(crate) enum ConvertArgs {
 }
 
 impl ConvertArgs {
-    pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Self> {
+    pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Vec<Self>> {
         let list: MetaList = attr.parse_args()?;
 
         let Some(ident) = list.path.get_ident() else {
             return Err(syn::Error::new(list.span(), "expected `from` or `into`"));
         };
 
+        type Idents = syn::punctuated::Punctuated<syn::Ident, syn::Token![,]>;
+
         match ident.to_string().as_str() {
-            "from" => Ok(ConvertArgs::From(list.parse_args()?)),
-            "into" => Ok(ConvertArgs::Into(list.parse_args()?)),
+            "from" => {
+                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
+                Ok(idents.into_iter().map(ConvertArgs::From).collect())
+            }
+            "into" => {
+                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
+                Ok(idents.into_iter().map(ConvertArgs::Into).collect())
+            }
+            "from_into" => {
+                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
+                let mut idents_vec = Vec::with_capacity(idents.len() * 2);
+                for ident in idents {
+                    idents_vec.push(ConvertArgs::From(ident.clone()));
+                    idents_vec.push(ConvertArgs::Into(ident));
+                }
+                Ok(idents_vec)
+            }
             _ => Err(syn::Error::new(ident.span(), "expected `from` or `into`")),
         }
     }
@@ -52,15 +69,26 @@ impl ConvertFieldMap {
     }
 }
 
-pub(crate) struct ConvertFieldArgs<'a> {
-    pub ident: &'a Ident,
+pub(crate) enum ConvertFieldArgKind {
+    From(Ident),
+    Into(Ident),
+    All,
+}
+
+pub(crate) struct ConvertFieldArg {
+    pub kind: Vec<ConvertFieldArgKind>,
     pub ignore: bool,
     pub map: ConvertFieldMap,
     pub rename: Option<LitStr>,
 }
 
+pub(crate) struct ConvertFieldArgs<'a> {
+    pub ident: &'a Ident,
+    pub arg: ConvertFieldArg,
+}
+
 impl<'a> ConvertFieldArgs<'a> {
-    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
+    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Vec<Self>> {
         let Some(ref ident) = field.ident else {
             return Err(syn::Error::new(field.span(), "expected named field"));
         };
@@ -103,6 +131,8 @@ impl<'a> ConvertFieldArgs<'a> {
             if !attr.path().is_ident("convert") {
                 continue;
             }
+
+            let token = attr.parse_args::<TokenStream>()?;
 
             let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
             for meta in nested {

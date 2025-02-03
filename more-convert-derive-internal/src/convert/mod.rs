@@ -33,20 +33,23 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
 
     let generics = input.generics.split_for_impl();
 
-    match &struct_args {
-        ConvertArgs::From(ident) => Ok(gen_convert(
-            &generics,
-            &input.ident,
-            ident,
-            &from::process_from(&fields)?,
-        )),
-        ConvertArgs::Into(ident) => Ok(gen_convert(
-            &generics,
-            ident,
-            &input.ident,
-            &into::process_into(&fields)?,
-        )),
-    }
+    struct_args
+        .into_iter()
+        .map(|v| match v {
+            ConvertArgs::From(ident) => Ok(gen_convert(
+                &generics,
+                &input.ident,
+                &ident,
+                &from::process_from(&fields)?,
+            )),
+            ConvertArgs::Into(ident) => Ok(gen_convert(
+                &generics,
+                &ident,
+                &input.ident,
+                &into::process_into(&fields)?,
+            )),
+        })
+        .collect::<syn::Result<TokenStream>>()
 }
 
 pub(crate) fn gen_convert(
