@@ -1,11 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    braced, parenthesized, punctuated::Punctuated, spanned::Spanned, token::Paren, Expr, ExprPath,
-    Field, Ident, Lit, LitStr, Meta, MetaList, Token, Type,
+    punctuated::Punctuated, spanned::Spanned, Expr, ExprPath, Field, Ident, Lit, LitStr, Meta,
+    MetaList, Token, Type,
 };
 
-use crate::{is_option, is_vec};
+use crate::{check_duplicate, is_option, is_vec};
 
 pub(crate) enum ConvertArgs {
     From(Ident),
@@ -69,49 +69,30 @@ impl ConvertFieldMap {
     }
 }
 
+#[derive(PartialEq)]
 pub(crate) enum ConvertFieldArgKind {
     From(Ident),
     Into(Ident),
+    FromInto(Ident),
     All,
 }
 
 pub(crate) struct ConvertFieldArg {
-    pub kind: Vec<ConvertFieldArgKind>,
+    pub kind: ConvertFieldArgKind,
     pub ignore: bool,
     pub map: ConvertFieldMap,
     pub rename: Option<LitStr>,
 }
 
-pub(crate) struct ConvertFieldArgs<'a> {
-    pub ident: &'a Ident,
-    pub arg: ConvertFieldArg,
-}
+type Args = Punctuated<Meta, Token![,]>;
 
-impl<'a> ConvertFieldArgs<'a> {
-    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Vec<Self>> {
-        let Some(ref ident) = field.ident else {
-            return Err(syn::Error::new(field.span(), "expected named field"));
-        };
-
-        macro_rules! check_duplicate {
-            ($span:expr, $variant:ident) => {
-                check_duplicate!(@__message $span, $variant, $variant.is_some(),);
-            };
-            ($span:expr, $variant:ident, $additional:literal) => {
-                check_duplicate!(@__message $span, $variant, $variant.is_some(), $additional);
-            };
-            ($span:expr, $variant:ident, $expr:expr) => {
-                check_duplicate!(@__message $span, $variant, $expr,);
-            };
-            (@__message $span:expr, $variant:ident, $expr:expr, $($additional:expr)?) => {
-                check_duplicate!(@__final $span, $expr, concat!("duplicate `", stringify!($variant), "` attribute.", $(" ", $additional)?));
-            };
-            (@__final $span:expr, $expr:expr, $message:expr) => {
-                if $expr {
-                    return Err(syn::Error::new($span, $message));
-                }
-            };
-        }
+impl ConvertFieldArg {
+    pub(crate) fn from_meta(
+        ty: &Type,
+        kind: ConvertFieldArgKind,
+        meta_iter: impl IntoIterator<Item = Meta>,
+    ) -> syn::Result<Vec<Self>> {
+        let mut vec = Vec::new();
 
         let mut ignore = false;
         let mut map = None;
@@ -127,66 +108,133 @@ impl<'a> ConvertFieldArgs<'a> {
             };
         }
 
+        macro_rules! check_nest {
+            ($current_kind:ident,$name:literal,$list:expr,$kind:ident) => {
+                if $current_kind != ConvertFieldArgKind::All {
+                    return Err(syn::Error::new(
+                        $list.span(),
+                        concat!("not allowed nested `", $name, "`"),
+                    ));
+                }
+                let mut meta = $list.parse_args_with(Args::parse_terminated)?.into_iter();
+                let ident = meta
+                    .next()
+                    .ok_or_else(|| syn::Error::new($list.span(), "expected `ident`"))?;
+                let ident = ident.require_path_only()?;
+                let ident = ident
+                    .get_ident()
+                    .ok_or_else(|| syn::Error::new(ident.span(), "expected ident"))?;
+                vec.extend(ConvertFieldArg::from_meta(
+                    ty,
+                    ConvertFieldArgKind::$kind(ident.clone()),
+                    meta,
+                )?);
+            };
+        }
+
+        for meta in meta_iter {
+            match meta {
+                Meta::Path(path) if path.is_ident("ignore") => {
+                    check_duplicate!(path.span(), ignore, ignore);
+                    ignore = true;
+                }
+                Meta::NameValue(meta) if meta.path.is_ident("map") => {
+                    check_duplicate_map!(meta.path.span());
+                    map = Some(ConvertFieldMap::Map(meta.value));
+                }
+                Meta::NameValue(meta) if meta.path.is_ident("map_field") => {
+                    check_duplicate_map!(meta.path.span());
+                    let Expr::Path(path) = meta.value else {
+                        return Err(syn::Error::new(meta.value.span(), "expected path"));
+                    };
+                    map = Some(ConvertFieldMap::FieldFn(path));
+                }
+                Meta::NameValue(meta) if meta.path.is_ident("map_struct") => {
+                    check_duplicate_map!(meta.path.span());
+                    let Expr::Path(path) = meta.value else {
+                        return Err(syn::Error::new(meta.value.span(), "expected path"));
+                    };
+                    map = Some(ConvertFieldMap::StructFn(path));
+                }
+                Meta::NameValue(meta) if meta.path.is_ident("rename") => {
+                    check_duplicate!(meta.path.span(), rename);
+                    let Expr::Lit(lit) = meta.value else {
+                        return Err(syn::Error::new(meta.value.span(), "expected literal"));
+                    };
+
+                    let Lit::Str(lit_str) = lit.lit else {
+                        return Err(syn::Error::new_spanned(lit, "expected string literal"));
+                    };
+
+                    rename = Some(lit_str);
+                }
+                Meta::List(list) if list.path.is_ident("from") => {
+                    check_nest!(kind, "from", list, From);
+                }
+                Meta::List(list) if list.path.is_ident("into") => {
+                    check_nest!(kind, "into", list, Into);
+                }
+                Meta::List(list) if list.path.is_ident("from_into") => {
+                    check_nest!(kind, "from_into", list, FromInto);
+                }
+                _ => {
+                    return Err(syn::Error::new(
+                        meta.span(),
+                        "unrecognized convert attribute",
+                    ))
+                }
+            }
+        }
+
+        vec.push(Self {
+            kind,
+            ignore,
+            map: map.unwrap_or_else(|| ConvertFieldMap::Suffix(gen_suffix(ty))),
+            rename,
+        });
+
+        Ok(vec)
+    }
+}
+
+pub(crate) struct ConvertFieldArgs<'a> {
+    pub ident: &'a Ident,
+    pub arg: Vec<ConvertFieldArg>,
+}
+
+impl<'a> ConvertFieldArgs<'a> {
+    pub(crate) fn get_top_priority_arg(&self, to: &ConvertArgs) -> &ConvertFieldArg {
+        match to {
+            ConvertArgs::From(ident) => {
+                let from_into = self.arg.iter().find(|v| matches!(v.kind, ConvertFieldArgKind::FromInto(ref ident) if ident.eq(ident)));
+            }
+            ConvertArgs::Into(ident) => {
+                let from_into = self.arg.iter().find(|v| matches!(v.kind, ConvertFieldArgKind::FromInto(ref ident) if ident.eq(ident)));
+            }
+        }
+        todo!();
+    }
+    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
+        let Some(ref ident) = field.ident else {
+            return Err(syn::Error::new(field.span(), "expected named field"));
+        };
+
+        let mut arg = Vec::new();
+
         for attr in &field.attrs {
             if !attr.path().is_ident("convert") {
                 continue;
             }
 
-            let token = attr.parse_args::<TokenStream>()?;
-
-            let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-            for meta in nested {
-                match meta {
-                    Meta::Path(path) if path.is_ident("ignore") => {
-                        check_duplicate!(path.span(), ignore, ignore);
-                        ignore = true;
-                    }
-                    Meta::NameValue(meta) if meta.path.is_ident("map") => {
-                        check_duplicate_map!(meta.path.span());
-                        map = Some(ConvertFieldMap::Map(meta.value));
-                    }
-                    Meta::NameValue(meta) if meta.path.is_ident("map_field") => {
-                        check_duplicate_map!(meta.path.span());
-                        let Expr::Path(path) = meta.value else {
-                            return Err(syn::Error::new(meta.value.span(), "expected path"));
-                        };
-                        map = Some(ConvertFieldMap::FieldFn(path));
-                    }
-                    Meta::NameValue(meta) if meta.path.is_ident("map_struct") => {
-                        check_duplicate_map!(meta.path.span());
-                        let Expr::Path(path) = meta.value else {
-                            return Err(syn::Error::new(meta.value.span(), "expected path"));
-                        };
-                        map = Some(ConvertFieldMap::StructFn(path));
-                    }
-                    Meta::NameValue(meta) if meta.path.is_ident("rename") => {
-                        check_duplicate!(meta.path.span(), rename);
-                        let Expr::Lit(lit) = meta.value else {
-                            return Err(syn::Error::new(meta.value.span(), "expected literal"));
-                        };
-
-                        let Lit::Str(lit_str) = lit.lit else {
-                            return Err(syn::Error::new_spanned(lit, "expected string literal"));
-                        };
-
-                        rename = Some(lit_str);
-                    }
-                    _ => {
-                        return Err(syn::Error::new(
-                            meta.span(),
-                            "unrecognized convert attribute",
-                        ))
-                    }
-                }
-            }
+            let nested = attr.parse_args_with(Args::parse_terminated)?;
+            arg.extend(ConvertFieldArg::from_meta(
+                &field.ty,
+                ConvertFieldArgKind::All,
+                nested,
+            )?);
         }
 
-        Ok(ConvertFieldArgs {
-            ident,
-            ignore,
-            map: map.unwrap_or_else(|| ConvertFieldMap::Suffix(gen_suffix(&field.ty))),
-            rename,
-        })
+        Ok(ConvertFieldArgs { ident, arg })
     }
 }
 

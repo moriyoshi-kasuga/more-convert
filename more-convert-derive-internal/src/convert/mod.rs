@@ -40,13 +40,13 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
                 &generics,
                 &input.ident,
                 &ident,
-                &from::process_from(&fields)?,
+                &from::process_from(&ident, &fields)?,
             )),
             ConvertArgs::Into(ident) => Ok(gen_convert(
                 &generics,
                 &ident,
                 &input.ident,
-                &into::process_into(&fields)?,
+                &into::process_into(&ident, &fields)?,
             )),
         })
         .collect::<syn::Result<TokenStream>>()

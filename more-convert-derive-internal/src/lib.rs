@@ -54,3 +54,25 @@ pub(crate) fn get_last_path_segment(ty: &Type) -> Option<&syn::PathSegment> {
         _ => None,
     }
 }
+
+macro_rules! check_duplicate {
+    ($span:expr, $variant:ident) => {
+        $crate::check_duplicate!(@__message $span, $variant, $variant.is_some(),);
+    };
+    ($span:expr, $variant:ident, $additional:literal) => {
+        $crate::check_duplicate!(@__message $span, $variant, $variant.is_some(), $additional);
+    };
+    ($span:expr, $variant:ident, $expr:expr) => {
+        $crate::check_duplicate!(@__message $span, $variant, $expr,);
+    };
+    (@__message $span:expr, $variant:ident, $expr:expr, $($additional:expr)?) => {
+        $crate::check_duplicate!(@__final $span, $expr, concat!("duplicate `", stringify!($variant), "` attribute.", $(" ", $additional)?));
+    };
+    (@__final $span:expr, $expr:expr, $message:expr) => {
+        if $expr {
+            return Err(syn::Error::new($span, $message));
+        }
+    };
+}
+
+pub(crate) use check_duplicate;
