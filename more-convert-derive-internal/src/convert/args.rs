@@ -73,7 +73,6 @@ impl ConvertFieldMap {
 pub(crate) enum ConvertFieldArgKind {
     From(Ident),
     Into(Ident),
-    FromInto(Ident),
     All,
 }
 
@@ -109,7 +108,7 @@ impl ConvertFieldArg {
         }
 
         macro_rules! check_nest {
-            ($current_kind:ident,$name:literal,$list:expr,$kind:ident) => {
+            ($current_kind:ident,$name:literal,$list:expr,$($kind:ident),*) => {
                 if $current_kind != ConvertFieldArgKind::All {
                     return Err(syn::Error::new(
                         $list.span(),
@@ -124,11 +123,11 @@ impl ConvertFieldArg {
                 let ident = ident
                     .get_ident()
                     .ok_or_else(|| syn::Error::new(ident.span(), "expected ident"))?;
-                vec.extend(ConvertFieldArg::from_meta(
+                $(vec.extend(ConvertFieldArg::from_meta(
                     ty,
                     ConvertFieldArgKind::$kind(ident.clone()),
-                    meta,
-                )?);
+                    meta.clone(),
+                )?);)*
             };
         }
 
@@ -175,7 +174,7 @@ impl ConvertFieldArg {
                     check_nest!(kind, "into", list, Into);
                 }
                 Meta::List(list) if list.path.is_ident("from_into") => {
-                    check_nest!(kind, "from_into", list, FromInto);
+                    check_nest!(kind, "from_into", list, From, Into);
                 }
                 _ => {
                     return Err(syn::Error::new(
@@ -206,13 +205,25 @@ impl<'a> ConvertFieldArgs<'a> {
     pub(crate) fn get_top_priority_arg(&self, to: &ConvertArgs) -> &ConvertFieldArg {
         match to {
             ConvertArgs::From(ident) => {
-                let from_into = self.arg.iter().find(|v| matches!(v.kind, ConvertFieldArgKind::FromInto(ref ident) if ident.eq(ident)));
+                if let Some(from) = self.arg.iter().find(
+                    |v| matches!(v.kind, ConvertFieldArgKind::From(ref kind_ident) if kind_ident == ident),
+                ) {
+                    return from;
+                }
             }
             ConvertArgs::Into(ident) => {
-                let from_into = self.arg.iter().find(|v| matches!(v.kind, ConvertFieldArgKind::FromInto(ref ident) if ident.eq(ident)));
+                if let Some(into) = self.arg.iter().find(
+                    |v| matches!(v.kind, ConvertFieldArgKind::Into(ref kind_ident) if kind_ident == ident)) {
+                    return into;
+                }
             }
         }
-        todo!();
+        // If there is no match, return the first All arg
+        #[allow(clippy::unwrap_used)]
+        self.arg
+            .iter()
+            .find(|v| matches!(v.kind, ConvertFieldArgKind::All))
+            .unwrap()
     }
     pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
         let Some(ref ident) = field.ident else {
@@ -232,6 +243,15 @@ impl<'a> ConvertFieldArgs<'a> {
                 ConvertFieldArgKind::All,
                 nested,
             )?);
+        }
+
+        if arg.is_empty() {
+            arg.push(ConvertFieldArg {
+                kind: ConvertFieldArgKind::All,
+                ignore: false,
+                map: ConvertFieldMap::Suffix(gen_suffix(&field.ty)),
+                rename: None,
+            });
         }
 
         Ok(ConvertFieldArgs { ident, arg })

@@ -12,6 +12,9 @@ pub(crate) fn process_into(
     let mut result: (Vec<TokenStream>, Vec<TokenStream>) = Default::default();
     for v in fields {
         let arg = v.get_top_priority_arg(&into);
+        if arg.ignore {
+            continue;
+        }
         let token = arg.map.to_token(&v.ident.to_token_stream());
         let ident = match &arg.rename {
             Some(v) => Ident::new(&v.value(), v.span()).into_token_stream(),
