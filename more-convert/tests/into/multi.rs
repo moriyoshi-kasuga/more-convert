@@ -1,10 +1,10 @@
 use more_convert::Convert;
 
 #[derive(Convert)]
-#[convert(from_into(B, C, D))]
+#[convert(into(B, C, D))]
 pub struct A {
-    #[convert(from_into(B, rename = "sample"))]
-    #[convert(from_into(C, rename = "sample"))]
+    #[convert(into(B, rename = "sample"))]
+    #[convert(into(C, rename = "sample"))]
     hey: String,
 }
 
@@ -22,22 +22,22 @@ pub struct D {
 
 #[test]
 pub fn main() {
-    let b = B {
-        sample: "B".to_string(),
+    let b = A {
+        hey: "B".to_string(),
     };
-    let c = C {
-        sample: "C".to_string(),
+    let c = A {
+        hey: "C".to_string(),
+    };
+    let d = A {
+        hey: "D".to_string(),
     };
 
-    let ab: A = b.into();
-    let ac: A = c.into();
+    let ab: B = b.into();
+    let ac: C = c.into();
+    let ad: D = d.into();
 
-    assert_eq!(ab.hey, "B");
-    assert_eq!(ac.hey, "C");
+    assert_eq!(ab.sample, "B");
+    assert_eq!(ac.sample, "C");
 
-    let db: D = ab.into();
-    let dc: D = ac.into();
-
-    assert_eq!(db.hey, "B");
-    assert_eq!(dc.hey, "C");
+    assert_eq!(ad.hey, "D");
 }
