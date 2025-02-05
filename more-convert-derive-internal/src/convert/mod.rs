@@ -1,4 +1,4 @@
-use args::{ConvertArgs, ConvertFieldArgs};
+use args::{ConvertArgs, ConvertFieldArgKind, ConvertFieldArgs};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Ident, ImplGenerics, TypeGenerics, WhereClause};
 
@@ -30,6 +30,36 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         .iter()
         .map(ConvertFieldArgs::from_field)
         .collect::<syn::Result<Vec<_>>>()?;
+
+    for field in &fields {
+        for arg in &field.arg {
+            match &arg.kind {
+                ConvertFieldArgKind::From(kind_ident) => {
+                    let has = struct_args
+                        .iter()
+                        .find(|v| matches!(v, ConvertArgs::From(ident) if ident == kind_ident));
+                    if has.is_none() {
+                        return Err(syn::Error::new(
+                            kind_ident.span(),
+                            format!("`{}` is not in the `from` target", kind_ident),
+                        ));
+                    }
+                }
+                ConvertFieldArgKind::Into(kind_ident) => {
+                    let has = struct_args
+                        .iter()
+                        .find(|v| matches!(v, ConvertArgs::Into(ident) if ident == kind_ident));
+                    if has.is_none() {
+                        return Err(syn::Error::new(
+                            kind_ident.span(),
+                            format!("`{}` is not in the `into` target", kind_ident),
+                        ));
+                    }
+                }
+                ConvertFieldArgKind::All => continue,
+            }
+        }
+    }
 
     let generics = input.generics.split_for_impl();
 
