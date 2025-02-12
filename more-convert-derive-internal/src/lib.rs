@@ -79,3 +79,17 @@ macro_rules! check_duplicate {
 }
 
 pub(crate) use check_duplicate;
+
+fn require_lit_str<S: syn::spanned::Spanned>(span: &S, expr: &syn::Expr) -> syn::Result<String> {
+    if let syn::Expr::Lit(expr_lit) = &expr {
+        if let syn::Lit::Str(lit_str) = &expr_lit.lit {
+            return Ok(lit_str.value());
+        }
+    }
+
+    Err(syn::Error::new(span.span(), "expected string literal"))
+}
+
+fn unraw(ident: &proc_macro2::Ident) -> String {
+    ident.to_string().trim_start_matches("r#").to_owned()
+}
