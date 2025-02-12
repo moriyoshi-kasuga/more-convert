@@ -227,3 +227,8 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_convert, input)
 }
+
+#[proc_macro_derive(EnumName, attributes(enum_name))]
+pub fn derive_enum_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    use_internal!(more_convert_derive_internal::derive_enum_name, input)
+}

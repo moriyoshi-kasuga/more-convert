@@ -15,6 +15,7 @@ keywords.workspace = true
 proc-macro2.workspace = true
 syn.workspace = true
 quote.workspace = true
+ident_case = "1.0"
 
 [lints]
 workspace = true
