@@ -228,6 +228,74 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     use_internal!(more_convert_derive_internal::derive_convert, input)
 }
 
+/// Automatically implements [`more_convert::EnumName`] on enum
+///
+/// # Where to use:
+///   - Only want the kind
+///
+/// # Note:
+///   - prefix and suffix are applied after rename_all
+///
+/// # EnumAttribute:
+///   - rename_all: apply rule to field name
+///     The possible values are ("lowercase", "UPPERCASE", "PascalCase", "camelCase",
+///     "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE")
+///   - prefix: add prefix to field name
+///   - suffix: add suffix to field name
+///
+/// # Variant Attribute:
+///  - rename: rename field, (prefix, suffix and rename_all are not applied)
+///
+/// # Examples
+///
+/// ## Normal
+///
+/// ```rust
+/// use more_convert::EnumName;
+///
+/// #[derive(EnumName)]
+/// pub enum Error {
+///   InvalidCode,
+///   ServerError,
+/// }
+///
+/// assert_eq!("InvalidCode", Error::InvalidCode.enum_name());
+/// assert_eq!("ServerError", Error::ServerError.enum_name());
+/// ```
+///
+/// ## rename and rename_all
+///
+/// ```rust
+/// use more_convert::EnumName;
+///
+/// #[derive(EnumName)]
+/// #[enum_name(rename_all = "snake_case")]
+/// pub enum Error {
+///   InvalidCode,
+///   ServerError,
+///   #[enum_name(rename = "NotFound")]
+///   NotFoundError,
+/// }
+///
+/// assert_eq!("invalid_code", Error::InvalidCode.enum_name());
+/// assert_eq!("server_error", Error::ServerError.enum_name());
+/// assert_eq!("NotFound", Error::NotFoundError.enum_name());
+/// ```
+///
+/// ## prefix and suffix
+/// ```rust
+/// use more_convert::EnumName;
+///
+/// #[derive(EnumName)]
+/// #[enum_name(prefix = "Error", suffix  = "What")]
+/// pub enum Error {
+///  InvalidCode,
+///  ServerError,
+/// }
+///
+/// assert_eq!("ErrorInvalidCodeWhat", Error::InvalidCode.enum_name());
+/// assert_eq!("ErrorServerErrorWhat", Error::ServerError.enum_name());
+///
 #[proc_macro_derive(EnumName, attributes(enum_name))]
 pub fn derive_enum_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_enum_name, input)
