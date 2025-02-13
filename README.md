@@ -89,6 +89,31 @@ assert_eq!(a.b, 2u8);
 more `Into` examples are [here](./more-convert/tests/from/)  
 more `From` examples are [here](./more-convert/tests/into/)
 
+### EnumName
+
+- enum_attributes
+
+  - rename_all: apply rule to field name
+    - Possible values: "lowercase", "UPPERCASE", "PascalCase", "camelCase", "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE"
+  - prefix: add prefix to field name
+  - suffix: add suffix to field name
+
+- variant_attributes
+  - rename: rename field (prefix, suffix, and rename_all are not applied)
+
+```rust
+use more_convert::EnumName;
+
+#[derive(EnumName)]
+pub enum Error {
+    InvalidCode,
+    ServerError,
+}
+
+assert_eq!("InvalidCode", Error::InvalidCode.enum_name());
+assert_eq!("ServerError", Error::ServerError.enum_name());
+```
+
 ## License
 
 Licensed under
