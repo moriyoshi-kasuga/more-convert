@@ -18,7 +18,7 @@ pub fn derive_enum_name(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         .iter()
         .map(|f| match f.fields {
             syn::Fields::Named(_) => quote::quote! { {..} },
-            syn::Fields::Unnamed(_) => quote::quote! { (_) },
+            syn::Fields::Unnamed(_) => quote::quote! { {..} },
             syn::Fields::Unit => quote::quote! {},
         })
         .collect::<Vec<_>>();
