@@ -1,5 +1,7 @@
 use quote::ToTokens;
-use syn::{punctuated::Punctuated, spanned::Spanned, token::Comma, Ident, LitInt, Path, Variant};
+use syn::{punctuated::Punctuated, spanned::Spanned, token::Comma, Ident, LitInt, Meta, Variant};
+
+use crate::parse_meta_attr;
 
 pub(crate) struct EnumReprField {
     pub ident: Ident,
@@ -85,23 +87,21 @@ pub(crate) struct EnumReprOption {
 impl EnumReprOption {
     pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Self> {
         let mut option = EnumReprOption::default();
-        let metas = attr.parse_args_with(Punctuated::<Path, Comma>::parse_terminated)?;
-        for meta in metas {
-            match meta.get_ident() {
-                Some(ident) if ident == "serde" => {
+        parse_meta_attr(attr, |meta| {
+            match meta {
+                Meta::Path(path) if path.is_ident("serde") => {
                     option.serde = true;
                 }
-                Some(ident) if ident == "implicit" => {
+                Meta::Path(path) if path.is_ident("implicit") => {
                     option.implicit = true;
                 }
                 _ => {
-                    return Err(syn::Error::new(
-                        meta.span(),
-                        "unrecognized enum repr option",
-                    ));
+                    return Err(syn::Error::new(meta.span(), "unexpected attribute"));
                 }
-            }
-        }
+            };
+            Ok(())
+        })?;
+
         Ok(option)
     }
 }

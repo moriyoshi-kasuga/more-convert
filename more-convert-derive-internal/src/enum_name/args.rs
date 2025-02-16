@@ -2,9 +2,9 @@ use std::str::FromStr;
 
 use ident_case::RenameRule;
 use proc_macro2::TokenStream;
-use syn::{punctuated::Punctuated, spanned::Spanned, Meta, Token};
+use syn::{spanned::Spanned, Meta};
 
-use crate::{check_duplicate, require_lit_str, unraw};
+use crate::{check_duplicate, parse_meta_attrs, require_lit_str, unraw};
 
 pub(crate) struct EnumNameFieldArg {
     pub name: String,
@@ -32,24 +32,17 @@ pub(crate) fn variant_attr(
 ) -> syn::Result<EnumNameFieldArg> {
     let mut rename: Option<String> = None;
 
-    for attr in &variant.attrs {
-        if !attr.path().is_ident("enum_name") {
-            continue;
-        }
-
-        let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-
-        for meta in nested {
-            match meta {
-                Meta::NameValue(meta) if meta.path.is_ident("rename") => {
-                    check_duplicate!(meta.span(), rename);
-                    let string = require_lit_str(&meta, &meta.value)?;
-                    rename = Some(string);
-                }
-                _ => return Err(syn::Error::new_spanned(meta, "unexpected attribute")),
+    parse_meta_attrs("enum_name", &variant.attrs, |meta| {
+        match meta {
+            Meta::NameValue(meta) if meta.path.is_ident("rename") => {
+                check_duplicate!(meta.span(), rename);
+                let string = require_lit_str(&meta, &meta.value)?;
+                rename = Some(string);
             }
+            _ => return Err(syn::Error::new_spanned(meta, "unexpected attribute")),
         }
-    }
+        Ok(())
+    })?;
 
     let name = match rename {
         Some(x) => x,
@@ -73,43 +66,37 @@ pub(crate) fn enum_attr(derive: &syn::DeriveInput) -> syn::Result<EnumNameEnumAr
     let mut prefix: Option<String> = None;
     let mut suffix: Option<String> = None;
 
-    for attr in &derive.attrs {
-        if !attr.path().is_ident("enum_name") {
-            continue;
-        }
+    parse_meta_attrs("enum_name", &derive.attrs, |meta| {
+        match meta {
+            Meta::NameValue(meta) if meta.path.is_ident("rename_all") => {
+                check_duplicate!(meta.span(), rename_all);
 
-        let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
+                let string = require_lit_str(&meta, &meta.value)?;
 
-        for meta in nested {
-            match meta {
-                Meta::NameValue(meta) if meta.path.is_ident("rename_all") => {
-                    check_duplicate!(meta.span(), rename_all);
-
-                    let string = require_lit_str(&meta, &meta.value)?;
-
-                    rename_all = Some(
-                        RenameRule::from_str(&string)
-                            .map_err(|_| syn::Error::new(meta.span(), "invalid RenameRule"))?,
-                    );
-                }
-                Meta::NameValue(meta) if meta.path.is_ident("prefix") => {
-                    check_duplicate!(meta.span(), prefix);
-
-                    let string = require_lit_str(&meta, &meta.value)?;
-
-                    prefix = Some(string);
-                }
-                Meta::NameValue(meta) if meta.path.is_ident("suffix") => {
-                    check_duplicate!(meta.span(), suffix);
-
-                    let string = require_lit_str(&meta, &meta.value)?;
-
-                    suffix = Some(string);
-                }
-                _ => return Err(syn::Error::new_spanned(meta, "unexpected attribute")),
+                rename_all = Some(
+                    RenameRule::from_str(&string)
+                        .map_err(|_| syn::Error::new(meta.span(), "invalid RenameRule"))?,
+                );
             }
+            Meta::NameValue(meta) if meta.path.is_ident("prefix") => {
+                check_duplicate!(meta.span(), prefix);
+
+                let string = require_lit_str(&meta, &meta.value)?;
+
+                prefix = Some(string);
+            }
+            Meta::NameValue(meta) if meta.path.is_ident("suffix") => {
+                check_duplicate!(meta.span(), suffix);
+
+                let string = require_lit_str(&meta, &meta.value)?;
+
+                suffix = Some(string);
+            }
+            _ => return Err(syn::Error::new(meta.span(), "unexpected attribute")),
         }
-    }
+        Ok(())
+    })?;
+
     Ok(EnumNameEnumArg {
         rename_all: rename_all.unwrap_or(RenameRule::None),
         prefix,
