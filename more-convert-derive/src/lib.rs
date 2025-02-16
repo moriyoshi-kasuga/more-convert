@@ -108,14 +108,15 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 ///   - Those who find the implementation of from and into cumbersome.
 ///
 /// # Struct Attribute:
-///   - group of convert: (Choose one of these)
-///     - into: `impl From<#self> for #into_struct { /* auto gen */}`
-///     - from: `impl From<#from_struct> for #self { /* auto gen */}`
+///   - into: `impl From<#self> for #into_struct { /* auto gen */}`
+///   - from: `impl From<#from_struct> for #self { /* auto gen */}`
+///   - from_into: impl from and into
 ///
 /// # Field Attribute:
 ///   - ignore: ignore this field
 ///   - rename: rename this field
 ///   - group of map: map this field (Choose one of these)
+///     > default: `#field_name.into()`
 ///     - map: replace expr
 ///     - map_field: Process and pass field data
 ///     - map_struct: Create data from struct references
@@ -238,8 +239,9 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// # EnumAttribute:
 ///   - rename_all: apply rule to field name
-///     The possible values are ("lowercase", "UPPERCASE", "PascalCase", "camelCase",
-///     "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE")
+///     - default is "none"
+///     - The possible values are ("lowercase", "UPPERCASE", "PascalCase", "camelCase",
+///       "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE")
 ///   - prefix: add prefix to field name
 ///   - suffix: add suffix to field name
 ///

@@ -14,20 +14,27 @@ This crate provides utilities for convert
 
 `more-convert` provides a derive macro
 
-- `EnumRepr` automatically implements `TryFrom` and `Into` for enums
-  - Ideal for managing Type, etc.
-  - Example: [test code](./more-convert/tests/enum_repr/normal.rs)
 - `Convert` automatically implements `From` or `Into` for named structs
   - Leave the very cumbersome From and Into implementations to us!
-  - Example From: [from's test code](./more-convert/tests/from/normal.rs)
-  - Example Into: [into's test code](./more-convert/tests/into/normal.rs)
+  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
+- `EnumRepr` automatically implements `TryFrom` and `Into` for enums
+  - Ideal for managing Type, etc.
+  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
+- `EnumName` provides a method to get the name of the enum variant
+  - Ideal for error (kind) handling, etc.
+  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
 
-## Example
+## Examples
+
+What I write below is what I picked up.
+I try to keep it up to date in [doc.rs](https://docs.rs/more-convert/latest/more_convert), so please look there!
 
 ### EnumRepr
 
 - enum_attributes
   - serde: automatically implements `serde::Serialize` and `serde::Deserialize`
+
+more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
 
 ```rust
 use more_convert::EnumRepr;
@@ -59,6 +66,8 @@ assert_eq!(4u8.try_into(), Ok(Test::Four));
     - map: map of expr
     - map_field: map of field
     - map_struct: map of struct
+
+more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
 
 ```rust
 use more_convert::Convert;
@@ -100,6 +109,8 @@ more `From` examples are [here](./more-convert/tests/into/)
 
 - variant_attributes
   - rename: rename field (prefix, suffix, and rename_all are not applied)
+
+more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
 
 ```rust
 use more_convert::EnumName;
