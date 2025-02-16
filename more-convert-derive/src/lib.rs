@@ -245,6 +245,7 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// # Variant Attribute:
 ///  - rename: rename field, (prefix, suffix and rename_all are not applied)
+///  - nest: call EnumName on the first field of the variant
 ///
 /// # Examples
 ///
@@ -295,6 +296,34 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// assert_eq!("ErrorInvalidCodeWhat", Error::InvalidCode.enum_name());
 /// assert_eq!("ErrorServerErrorWhat", Error::ServerError.enum_name());
+/// ```
+///
+/// ## nest
+/// ```rust
+/// use more_convert::EnumName;
+///
+/// use more_convert::EnumName;
+///
+/// #[derive(EnumName)]
+/// #[enum_name(prefix = "Inner")]
+/// pub enum Inner {
+///     A,
+///     B,
+/// }
+///
+/// #[derive(EnumName)]
+/// pub enum TestEnumName {
+///     InvalidCode,
+///
+///     #[enum_name(nest)]
+///     Inner(Inner),
+/// }
+///
+/// assert_eq!("InvalidCode", TestEnumName::InvalidCode.enum_name());
+///
+/// assert_eq!("InnerA", Inner::A.enum_name());
+/// assert_eq!("InnerB", Inner::B.enum_name());
+/// ```
 ///
 #[proc_macro_derive(EnumName, attributes(enum_name))]
 pub fn derive_enum_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
