@@ -16,11 +16,14 @@ pub fn derive_enum_name(input: syn::DeriveInput) -> syn::Result<TokenStream> {
 
     let variant_name = variants.iter().map(|f| &f.ident).collect::<Vec<_>>();
 
+    let mut matches: Vec<TokenStream> = Vec::with_capacity(variants.len());
     let mut body: Vec<TokenStream> = Vec::with_capacity(variants.len());
 
     for variant in variants {
         let variant_arg = EnumNameVariantArg::from_variant(variant, &enum_arg)?;
-        body.push(variant_arg.into_token());
+        let (matches_token, variant_arg) = variant_arg.into_token();
+        matches.push(matches_token);
+        body.push(variant_arg);
     }
 
     let token = quote::quote! {
@@ -28,7 +31,7 @@ pub fn derive_enum_name(input: syn::DeriveInput) -> syn::Result<TokenStream> {
             fn enum_name(&self) -> &'static str {
                 match self {
                     #(
-                        #ident::#variant_name { .. } => #body,
+                        #ident::#variant_name #matches => #body,
                     )*
                 }
             }
