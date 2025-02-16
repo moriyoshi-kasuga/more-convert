@@ -6,12 +6,12 @@ use crate::{check_duplicate, parse_meta_attrs, require_lit_str, unraw};
 
 use super::enum_arg::EnumNameEnumArg;
 
-pub(crate) struct EnumNameVariantArg {
+pub(crate) struct EnumNameVariantArg<'a> {
     pub name: String,
-    pub nest: Option<(Option<Ident>, Type)>,
+    pub nest: Option<(&'a Option<Ident>, &'a Type)>,
 }
 
-impl EnumNameVariantArg {
+impl<'a> EnumNameVariantArg<'a> {
     pub(crate) fn into_token(self) -> (TokenStream, TokenStream) {
         if let Some((ident, ty)) = self.nest {
             let matches = match ident {
@@ -33,11 +33,11 @@ impl EnumNameVariantArg {
     }
 
     pub(crate) fn from_variant(
-        variant: &syn::Variant,
+        variant: &'a syn::Variant,
         enum_arg: &EnumNameEnumArg,
     ) -> syn::Result<Self> {
         let mut rename: Option<String> = None;
-        let mut nest: Option<(Option<Ident>, Type)> = None;
+        let mut nest: Option<(&'a Option<Ident>, &'a Type)> = None;
 
         parse_meta_attrs("enum_name", &variant.attrs, |meta| {
             match meta {
@@ -65,7 +65,7 @@ impl EnumNameVariantArg {
                         return Err(syn::Error::new_spanned(meta, "variant has multiple fields"));
                     }
 
-                    nest = Some((field.ident.clone(), field.ty.clone()));
+                    nest = Some((&field.ident, &field.ty));
                 }
                 _ => return Err(syn::Error::new_spanned(meta, "unexpected attribute")),
             }
