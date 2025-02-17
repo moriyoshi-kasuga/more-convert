@@ -13,11 +13,11 @@ pub(crate) fn derive_enum_repr_internal(
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let (discriminant_idents, (idents, discriminants)): (Vec<_>, (Vec<_>, Vec<_>)) = fields
-        .into_iter()
+        .iter()
         .map(|v| {
             (
                 quote::format_ident!("{}_{}", ident, &v.ident),
-                (v.ident, v.discriminant),
+                (v.ident, v.discriminant.as_ref()),
             )
         })
         .unzip();

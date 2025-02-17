@@ -9,3 +9,6 @@ pub use enum_name::derive_enum_name;
 
 mod dev_utils;
 pub(crate) use dev_utils::*;
+
+mod maybe_owned;
+pub(crate) use maybe_owned::MaybeOwned;
