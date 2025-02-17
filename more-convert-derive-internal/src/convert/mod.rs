@@ -1,12 +1,14 @@
-use args::{ConvertArgs, ConvertFieldArgKind, ConvertFieldArgs};
+use field_arg::{ConvertFieldArgKind, ConvertFieldArgs};
 use proc_macro2::TokenStream;
+use struct_arg::ConvertTarget;
 use syn::{spanned::Spanned, Ident, ImplGenerics, TypeGenerics, WhereClause};
 
 use crate::require_named_field_struct;
 
-mod args;
+mod field_arg;
 mod from;
 mod into;
+mod struct_arg;
 
 pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let fields = require_named_field_struct(&input)?;
@@ -23,7 +25,15 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         ));
     };
 
-    let struct_args = ConvertArgs::from_attr(attr)?;
+    derive_convert_internal(&input, fields, attr)
+}
+
+fn derive_convert_internal(
+    input: &syn::DeriveInput,
+    fields: &syn::FieldsNamed,
+    attr: &syn::Attribute,
+) -> syn::Result<TokenStream> {
+    let struct_args = ConvertTarget::from_attr(attr)?;
 
     let fields = fields
         .named
@@ -37,7 +47,7 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
                 ConvertFieldArgKind::From(kind_ident) => {
                     let has = struct_args
                         .iter()
-                        .find(|v| matches!(v, ConvertArgs::From(ident) if ident == kind_ident));
+                        .find(|v| matches!(v, ConvertTarget::From(ident) if ident == kind_ident));
                     if has.is_none() {
                         return Err(syn::Error::new(
                             kind_ident.span(),
@@ -48,7 +58,7 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
                 ConvertFieldArgKind::Into(kind_ident) => {
                     let has = struct_args
                         .iter()
-                        .find(|v| matches!(v, ConvertArgs::Into(ident) if ident == kind_ident));
+                        .find(|v| matches!(v, ConvertTarget::Into(ident) if ident == kind_ident));
                     if has.is_none() {
                         return Err(syn::Error::new(
                             kind_ident.span(),
@@ -66,13 +76,13 @@ pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     struct_args
         .into_iter()
         .map(|v| match v {
-            ConvertArgs::From(ident) => Ok(gen_convert(
+            ConvertTarget::From(ident) => Ok(gen_convert(
                 &generics,
                 &input.ident,
                 &ident,
                 &from::process_from(&ident, &fields)?,
             )),
-            ConvertArgs::Into(ident) => Ok(gen_convert(
+            ConvertTarget::Into(ident) => Ok(gen_convert(
                 &generics,
                 &ident,
                 &input.ident,

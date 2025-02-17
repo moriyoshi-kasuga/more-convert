@@ -2,48 +2,12 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated, spanned::Spanned, Expr, ExprPath, Field, Ident, Lit, LitStr, Meta,
-    MetaList, Token, Type,
+    Token, Type,
 };
 
 use crate::{check_duplicate, is_option, is_vec};
 
-pub(crate) enum ConvertArgs {
-    From(Ident),
-    Into(Ident),
-}
-
-impl ConvertArgs {
-    pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Vec<Self>> {
-        let list: MetaList = attr.parse_args()?;
-
-        let Some(ident) = list.path.get_ident() else {
-            return Err(syn::Error::new(list.span(), "expected `from` or `into`"));
-        };
-
-        type Idents = syn::punctuated::Punctuated<syn::Ident, syn::Token![,]>;
-
-        match ident.to_string().as_str() {
-            "from" => {
-                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
-                Ok(idents.into_iter().map(ConvertArgs::From).collect())
-            }
-            "into" => {
-                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
-                Ok(idents.into_iter().map(ConvertArgs::Into).collect())
-            }
-            "from_into" => {
-                let idents: Idents = list.parse_args_with(Idents::parse_terminated)?;
-                let mut idents_vec = Vec::with_capacity(idents.len() * 2);
-                for ident in idents {
-                    idents_vec.push(ConvertArgs::From(ident.clone()));
-                    idents_vec.push(ConvertArgs::Into(ident));
-                }
-                Ok(idents_vec)
-            }
-            _ => Err(syn::Error::new(ident.span(), "expected `from` or `into`")),
-        }
-    }
-}
+use super::struct_arg::ConvertTarget;
 
 pub(crate) enum ConvertFieldMap {
     Map(Expr),
@@ -202,16 +166,16 @@ pub(crate) struct ConvertFieldArgs<'a> {
 }
 
 impl<'a> ConvertFieldArgs<'a> {
-    pub(crate) fn get_top_priority_arg(&self, to: &ConvertArgs) -> &ConvertFieldArg {
+    pub(crate) fn get_top_priority_arg(&self, to: &ConvertTarget) -> &ConvertFieldArg {
         match to {
-            ConvertArgs::From(ident) => {
+            ConvertTarget::From(ident) => {
                 if let Some(from) = self.arg.iter().find(
                     |v| matches!(v.kind, ConvertFieldArgKind::From(ref kind_ident) if kind_ident == ident),
                 ) {
                     return from;
                 }
             }
-            ConvertArgs::Into(ident) => {
+            ConvertTarget::Into(ident) => {
                 if let Some(into) = self.arg.iter().find(
                     |v| matches!(v.kind, ConvertFieldArgKind::Into(ref kind_ident) if kind_ident == ident)) {
                     return into;
@@ -225,6 +189,7 @@ impl<'a> ConvertFieldArgs<'a> {
             .find(|v| matches!(v.kind, ConvertFieldArgKind::All))
             .unwrap()
     }
+
     pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
         let Some(ref ident) = field.ident else {
             return Err(syn::Error::new(field.span(), "expected named field"));
