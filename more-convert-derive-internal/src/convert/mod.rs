@@ -1,12 +1,12 @@
-use field_args::ConvertFieldArgs;
+use field::ConvertField;
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Ident, ImplGenerics, TypeGenerics, WhereClause};
 use target::ConvertTarget;
 
 use crate::require_named_field_struct;
 
+mod field;
 mod field_arg;
-mod field_args;
 mod from;
 mod into;
 mod target;
@@ -39,25 +39,22 @@ fn derive_convert_internal(
     let fields = fields
         .named
         .iter()
-        .map(ConvertFieldArgs::from_field)
+        .map(ConvertField::from_field)
         .collect::<syn::Result<Vec<_>>>()?;
 
     for arg in &fields {
         for target in arg.target.keys() {
-            struct_targets
-                .iter()
-                .find(|v| *v == target)
-                .ok_or_else(|| {
-                    let (target, ident) = match target {
-                        ConvertTarget::From(i) => ("from", i),
-                        ConvertTarget::Into(i) => ("into", i),
-                        ConvertTarget::FromInto(i) => ("from_into", i),
-                    };
-                    syn::Error::new(
-                        ident.span(),
-                        format!("`#[{}({})` is not in the target", target, ident),
-                    )
-                })?;
+            if !struct_targets.iter().any(|v| v.check_inclusive(target)) {
+                let (target, ident) = match target {
+                    ConvertTarget::From(i) => ("from", i),
+                    ConvertTarget::Into(i) => ("into", i),
+                    ConvertTarget::FromInto(i) => ("from_into", i),
+                };
+                return Err(syn::Error::new(
+                    ident.span(),
+                    format!("`#[{}({})` is not in the target", target, ident),
+                ));
+            }
         }
     }
 
@@ -97,6 +94,11 @@ fn derive_convert_internal(
             }
         })
         .collect::<syn::Result<TokenStream>>()
+}
+
+pub(crate) enum GenType<'a> {
+    Into(&'a Ident),
+    From(&'a Ident),
 }
 
 pub(crate) fn gen_convert(

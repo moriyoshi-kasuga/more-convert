@@ -2,22 +2,52 @@ use std::collections::HashMap;
 
 use syn::{spanned::Spanned, Field, Ident};
 
-use crate::AttrMetas;
+use crate::{AttrMetas, MaybeOwned};
 
 use super::{
     field_arg::{ConvertFieldArg, ConvertFieldMap},
-    ConvertTarget,
+    ConvertTarget, GenType,
 };
 
-pub(crate) struct ConvertFieldArgs<'a> {
+pub(crate) struct ConvertField<'a> {
     pub ident: &'a Ident,
     pub all: ConvertFieldArg,
     pub target: HashMap<ConvertTarget, ConvertFieldArg>,
 }
 
-impl<'a> ConvertFieldArgs<'a> {
-    pub(crate) fn get_top_priority_arg(&self, target: &ConvertTarget) -> &ConvertFieldArg {
-        self.target.get(target).unwrap_or(&self.all)
+impl<'a> ConvertField<'a> {
+    pub(crate) fn get_arg_with_merge(
+        &'a self,
+        gen_type: &GenType<'a>,
+    ) -> MaybeOwned<'a, ConvertFieldArg> {
+        macro_rules! get_merge {
+            ($target:expr,$merge:expr) => {
+                match self.target.get($target) {
+                    Some(target) => $merge.map(|v| MaybeOwned::Owned(v.merge(target))),
+                    None => $merge,
+                }
+            };
+        }
+
+        macro_rules! get {
+            ($target:expr) => {
+                match self.target.get($target) {
+                    Some(target) => MaybeOwned::Owned(target.merge(&self.all)),
+                    None => MaybeOwned::Borrowed(&self.all),
+                }
+            };
+        }
+
+        match gen_type {
+            GenType::From(ident) => {
+                let from = get!(&ConvertTarget::From((*ident).clone()));
+                get_merge!(&ConvertTarget::FromInto((*ident).clone()), from)
+            }
+            GenType::Into(ident) => {
+                let into = get!(&ConvertTarget::Into((*ident).clone()));
+                get_merge!(&ConvertTarget::FromInto((*ident).clone()), into)
+            }
+        }
     }
 
     pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
@@ -68,7 +98,7 @@ impl<'a> ConvertFieldArgs<'a> {
             },
         };
 
-        Ok(ConvertFieldArgs {
+        Ok(ConvertField {
             ident,
             all,
             target: target_arg,

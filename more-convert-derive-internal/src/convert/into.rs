@@ -2,16 +2,16 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::Ident;
 
-use super::{field_args::ConvertFieldArgs, ConvertTarget};
+use super::{field::ConvertField, GenType};
 
 pub(crate) fn process_into(
     ident: &Ident,
-    fields: &Vec<ConvertFieldArgs>,
+    fields: &Vec<ConvertField>,
 ) -> syn::Result<(Vec<TokenStream>, Vec<TokenStream>)> {
-    let into = ConvertTarget::Into(ident.clone());
+    let into = GenType::Into(ident);
     let mut result: (Vec<TokenStream>, Vec<TokenStream>) = Default::default();
     for v in fields {
-        let arg = v.get_top_priority_arg(&into);
+        let arg = v.get_arg_with_merge(&into);
         if arg.ignore {
             continue;
         }

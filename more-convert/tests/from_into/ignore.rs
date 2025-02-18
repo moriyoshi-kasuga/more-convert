@@ -1,11 +1,12 @@
 use more_convert::Convert;
 
 #[derive(Convert)]
-#[convert(from(B))]
+#[convert(from_into(B))]
 pub struct A {
     pub sample: u8,
-    // You can generate values use map
-    #[convert(map = Default::default())]
+
+    #[convert(from(B), map = Default::default())]
+    #[convert(into(B), ignore)]
     pub hey: u16,
 }
 

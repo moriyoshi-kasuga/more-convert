@@ -10,6 +10,19 @@ pub(crate) enum ConvertTarget {
 const EXPECT_TARGET: &str = "expected `from`, `into` or `from_into`";
 
 impl ConvertTarget {
+    pub(crate) fn check_inclusive(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ConvertTarget::FromInto(self_ident), other) => {
+                let ident = match other {
+                    ConvertTarget::FromInto(ident) => ident,
+                    ConvertTarget::From(ident) => ident,
+                    ConvertTarget::Into(ident) => ident,
+                };
+                self_ident == ident
+            }
+            _ => self.eq(other),
+        }
+    }
     pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Vec<Self>> {
         type Targets = syn::punctuated::Punctuated<syn::MetaList, syn::Token![,]>;
         let targets = attr.parse_args_with(Targets::parse_terminated)?;

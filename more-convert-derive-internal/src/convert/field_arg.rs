@@ -49,6 +49,24 @@ pub(crate) struct ConvertFieldArg {
     pub rename: Option<LitStr>,
 }
 
+impl ConvertFieldArg {
+    pub(crate) fn merge(&self, superiority: &Self) -> Self {
+        Self {
+            ignore: self.ignore || superiority.ignore,
+            map: {
+                match &superiority.map {
+                    ConvertFieldMap::Suffix(_) => self.map.clone(),
+                    _ => superiority.map.clone(),
+                }
+            },
+            rename: match &superiority.rename {
+                Some(rename) => Some(rename.clone()),
+                None => self.rename.clone(),
+            },
+        }
+    }
+}
+
 const NOT_FIRST: &str = "target attribute must be first";
 
 impl ConvertFieldArg {
