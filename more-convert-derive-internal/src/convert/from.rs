@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::Ident;
 
-use super::{field_arg::ConvertFieldArgs, ConvertTarget};
+use super::{field_args::ConvertFieldArgs, ConvertTarget};
 
 pub(crate) fn process_from(
     ident: &Ident,

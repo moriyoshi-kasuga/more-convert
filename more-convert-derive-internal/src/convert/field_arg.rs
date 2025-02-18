@@ -1,14 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{
-    punctuated::Punctuated, spanned::Spanned, Expr, ExprPath, Field, Ident, Lit, LitStr, Meta,
-    Token, Type,
-};
+use syn::{spanned::Spanned, Expr, ExprPath, Lit, LitStr, Meta, Type};
 
 use crate::{check_duplicate, is_option, is_vec};
 
-use super::struct_arg::ConvertTarget;
-
+#[derive(Clone)]
 pub(crate) enum ConvertFieldMap {
     Map(Expr),
     FieldFn(ExprPath),
@@ -17,6 +13,19 @@ pub(crate) enum ConvertFieldMap {
 }
 
 impl ConvertFieldMap {
+    pub(crate) fn gen_suffix(ty: &Type) -> Self {
+        let suffix = {
+            if is_vec(ty) {
+                quote::quote! {.into_iter().map(std::convert::Into::into).collect()}
+            } else if is_option(ty) {
+                quote::quote! {.map(std::convert::Into::into)}
+            } else {
+                quote::quote! { .into() }
+            }
+        };
+        ConvertFieldMap::Suffix(suffix)
+    }
+
     pub(crate) fn to_token(&self, ident: &TokenStream) -> TokenStream {
         match self {
             ConvertFieldMap::Map(map) => map.to_token_stream(),
@@ -33,30 +42,20 @@ impl ConvertFieldMap {
     }
 }
 
-#[derive(PartialEq)]
-pub(crate) enum ConvertFieldArgKind {
-    From(Ident),
-    Into(Ident),
-    All,
-}
-
+#[derive(Clone)]
 pub(crate) struct ConvertFieldArg {
-    pub kind: ConvertFieldArgKind,
     pub ignore: bool,
     pub map: ConvertFieldMap,
     pub rename: Option<LitStr>,
 }
 
-type Args = Punctuated<Meta, Token![,]>;
+const NOT_FIRST: &str = "target attribute must be first";
 
 impl ConvertFieldArg {
-    pub(crate) fn from_meta(
+    pub(crate) fn from_meta_iter(
         ty: &Type,
-        kind: ConvertFieldArgKind,
         meta_iter: impl IntoIterator<Item = Meta>,
-    ) -> syn::Result<Vec<Self>> {
-        let mut vec = Vec::new();
-
+    ) -> syn::Result<Self> {
         let mut ignore = false;
         let mut map = None;
         let mut rename = None;
@@ -68,30 +67,6 @@ impl ConvertFieldArg {
                     map,
                     "chose one of `map`, `map_field` or `map_struct`"
                 );
-            };
-        }
-
-        macro_rules! check_nest {
-            ($current_kind:ident,$name:literal,$list:expr,$($kind:ident),*) => {
-                if $current_kind != ConvertFieldArgKind::All {
-                    return Err(syn::Error::new(
-                        $list.span(),
-                        concat!("not allowed nested `", $name, "`"),
-                    ));
-                }
-                let mut meta = $list.parse_args_with(Args::parse_terminated)?.into_iter();
-                let ident = meta
-                    .next()
-                    .ok_or_else(|| syn::Error::new($list.span(), "expected `ident`"))?;
-                let ident = ident.require_path_only()?;
-                let ident = ident
-                    .get_ident()
-                    .ok_or_else(|| syn::Error::new(ident.span(), "expected ident"))?;
-                $(vec.extend(ConvertFieldArg::from_meta(
-                    ty,
-                    ConvertFieldArgKind::$kind(ident.clone()),
-                    meta.clone(),
-                )?);)*
             };
         }
 
@@ -132,13 +107,13 @@ impl ConvertFieldArg {
                     rename = Some(lit_str);
                 }
                 Meta::List(list) if list.path.is_ident("from") => {
-                    check_nest!(kind, "from", list, From);
+                    return Err(syn::Error::new(list.span(), NOT_FIRST))
                 }
                 Meta::List(list) if list.path.is_ident("into") => {
-                    check_nest!(kind, "into", list, Into);
+                    return Err(syn::Error::new(list.span(), NOT_FIRST))
                 }
                 Meta::List(list) if list.path.is_ident("from_into") => {
-                    check_nest!(kind, "from_into", list, From, Into);
+                    return Err(syn::Error::new(list.span(), NOT_FIRST))
                 }
                 _ => {
                     return Err(syn::Error::new(
@@ -149,86 +124,10 @@ impl ConvertFieldArg {
             }
         }
 
-        vec.push(Self {
-            kind,
+        Ok(Self {
             ignore,
-            map: map.unwrap_or_else(|| ConvertFieldMap::Suffix(gen_suffix(ty))),
+            map: map.unwrap_or_else(|| ConvertFieldMap::gen_suffix(ty)),
             rename,
-        });
-
-        Ok(vec)
+        })
     }
-}
-
-pub(crate) struct ConvertFieldArgs<'a> {
-    pub ident: &'a Ident,
-    pub arg: Vec<ConvertFieldArg>,
-}
-
-impl<'a> ConvertFieldArgs<'a> {
-    pub(crate) fn get_top_priority_arg(&self, to: &ConvertTarget) -> &ConvertFieldArg {
-        match to {
-            ConvertTarget::From(ident) => {
-                if let Some(from) = self.arg.iter().find(
-                    |v| matches!(v.kind, ConvertFieldArgKind::From(ref kind_ident) if kind_ident == ident),
-                ) {
-                    return from;
-                }
-            }
-            ConvertTarget::Into(ident) => {
-                if let Some(into) = self.arg.iter().find(
-                    |v| matches!(v.kind, ConvertFieldArgKind::Into(ref kind_ident) if kind_ident == ident)) {
-                    return into;
-                }
-            }
-        }
-        // If there is no match, return the first All arg
-        #[allow(clippy::unwrap_used)]
-        self.arg
-            .iter()
-            .find(|v| matches!(v.kind, ConvertFieldArgKind::All))
-            .unwrap()
-    }
-
-    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
-        let Some(ref ident) = field.ident else {
-            return Err(syn::Error::new(field.span(), "expected named field"));
-        };
-
-        let mut arg = Vec::new();
-
-        for attr in &field.attrs {
-            if !attr.path().is_ident("convert") {
-                continue;
-            }
-
-            let nested = attr.parse_args_with(Args::parse_terminated)?;
-            arg.extend(ConvertFieldArg::from_meta(
-                &field.ty,
-                ConvertFieldArgKind::All,
-                nested,
-            )?);
-        }
-
-        if arg.is_empty() {
-            arg.push(ConvertFieldArg {
-                kind: ConvertFieldArgKind::All,
-                ignore: false,
-                map: ConvertFieldMap::Suffix(gen_suffix(&field.ty)),
-                rename: None,
-            });
-        }
-
-        Ok(ConvertFieldArgs { ident, arg })
-    }
-}
-
-fn gen_suffix(ty: &Type) -> TokenStream {
-    if is_vec(ty) {
-        return quote::quote! {.into_iter().map(std::convert::Into::into).collect()};
-    }
-    if is_option(ty) {
-        return quote::quote! {.map(std::convert::Into::into)};
-    }
-    quote::quote! { .into() }
 }

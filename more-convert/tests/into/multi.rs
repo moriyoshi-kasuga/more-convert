@@ -3,8 +3,8 @@ use more_convert::Convert;
 #[derive(Convert)]
 #[convert(into(B, C, D))]
 pub struct A {
-    #[convert(into(B, rename = "sample"))]
-    #[convert(into(C, rename = "sample"))]
+    #[convert(into(B), rename = "sample")]
+    #[convert(into(C), rename = "sample")]
     hey: String,
 }
 

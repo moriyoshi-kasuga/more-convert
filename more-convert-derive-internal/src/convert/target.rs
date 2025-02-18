@@ -1,5 +1,6 @@
-use syn::{spanned::Spanned, Ident, MetaList};
+use syn::{spanned::Spanned, Ident, Meta, MetaList};
 
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum ConvertTarget {
     From(Ident),
     Into(Ident),
@@ -39,5 +40,21 @@ impl ConvertTarget {
         parse_target!("from_into", FromInto, list);
 
         Err(syn::Error::new(list.span(), EXPECT_TARGET))
+    }
+
+    pub(crate) fn option_from_meta(meta: &Meta) -> syn::Result<Option<Vec<Self>>> {
+        macro_rules! parse_target {
+            ($target:literal) => {
+                if meta.path().is_ident($target) {
+                    return ConvertTarget::from_meta_list(meta.require_list()?).map(Some);
+                }
+            };
+        }
+
+        parse_target!("from");
+        parse_target!("into");
+        parse_target!("from_into");
+
+        Ok(None)
     }
 }
