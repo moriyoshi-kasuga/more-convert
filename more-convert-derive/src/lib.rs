@@ -304,8 +304,6 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 /// ```rust
 /// use more_convert::EnumName;
 ///
-/// use more_convert::EnumName;
-///
 /// #[derive(EnumName)]
 /// #[enum_name(prefix = "Inner")]
 /// pub enum Inner {
