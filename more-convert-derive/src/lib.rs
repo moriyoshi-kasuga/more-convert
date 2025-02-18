@@ -113,6 +113,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 ///   - from_into: impl from and into
 ///
 /// # Field Attribute:
+///   - filter of target: (option, default apply all)
+///     - example `#[convert(from(A,B),ignore,..)]`, this field ignored in A and B
+///     - apply priority: from and into > from_into > all
 ///   - ignore: ignore this field
 ///   - rename: rename this field
 ///   - group of map: map this field (Choose one of these)
@@ -222,6 +225,31 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// assert_eq!(b.map, "1");
 /// assert_eq!(b.map_field, "2");
 /// assert_eq!(b.map_struct, "3");
+/// ```
+///
+/// ## from_into and filter
+///
+/// ```rust
+/// use more_convert::Convert;
+///
+/// #[derive(Convert)]
+/// #[convert(from_into(B))]
+/// pub struct A {
+///     pub sample: u8,
+///
+///     #[convert(from(B), map = Default::default())]
+///     #[convert(into(B), ignore)]
+///     pub hey: u16,
+/// }
+///
+/// pub struct B {
+///     sample: u8,
+/// }
+///
+/// let b = B { sample: 1 };
+/// let a: A = b.into();
+/// assert_eq!(a.sample, 1u8);
+/// assert_eq!(a.hey, 0u16);
 /// ```
 ///
 #[proc_macro_derive(Convert, attributes(convert))]
