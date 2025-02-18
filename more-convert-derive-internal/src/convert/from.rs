@@ -6,7 +6,7 @@ use super::{field::ConvertField, GenType};
 
 pub(crate) fn process_from(
     ident: &Ident,
-    fields: &Vec<ConvertField>,
+    fields: &[ConvertField],
 ) -> syn::Result<(Vec<TokenStream>, Vec<TokenStream>)> {
     let from = GenType::From(ident);
     let mut result: (Vec<TokenStream>, Vec<TokenStream>) = Default::default();

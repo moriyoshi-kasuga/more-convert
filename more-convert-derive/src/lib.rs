@@ -107,10 +107,14 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 ///   - When you are using the architectural
 ///   - Those who find the implementation of from and into cumbersome.
 ///
-/// # Struct Attribute:
+/// # Struct Attribute #[convert]:
 ///   - into: `impl From<#self> for #into_struct { /* auto gen */}`
 ///   - from: `impl From<#from_struct> for #self { /* auto gen */}`
 ///   - from_into: impl from and into
+///
+/// # Struct Attribute #[generate]:
+///   - example `#[generate(B(is_negative = value.sample.is_negative()))]`
+///     generate is used to generate the field value of the target struct
 ///
 /// # Field Attribute:
 ///   - filter of target: (option, default apply all)
@@ -252,7 +256,31 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// assert_eq!(a.hey, 0u16);
 /// ```
 ///
-#[proc_macro_derive(Convert, attributes(convert))]
+/// ## #[genearate]
+///
+/// ```rust
+/// use more_convert::Convert;
+///
+/// #[derive(Convert)]
+/// #[convert(into(B))]
+/// #[generate(B(is_negative = value.sample.is_negative()))]
+/// pub struct A {
+///     pub sample: i8,
+/// }
+///
+/// pub struct B {
+///     pub sample: i8,
+///     pub is_negative: bool,
+/// }
+///
+/// let a = A { sample: -1 };
+/// let b: B = a.into();
+///
+/// assert_eq!(b.sample, -1);
+/// assert!(b.is_negative);
+/// ```
+///
+#[proc_macro_derive(Convert, attributes(convert, generate))]
 pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_convert, input)
 }

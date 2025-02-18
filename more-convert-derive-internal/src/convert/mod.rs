@@ -1,6 +1,7 @@
 use field::ConvertField;
+use generate::GenerateArg;
 use proc_macro2::TokenStream;
-use syn::{spanned::Spanned, Ident, ImplGenerics, TypeGenerics, WhereClause};
+use syn::{Ident, ImplGenerics, TypeGenerics, WhereClause};
 use target::ConvertTarget;
 
 use crate::require_named_field_struct;
@@ -8,34 +9,46 @@ use crate::require_named_field_struct;
 mod field;
 mod field_arg;
 mod from;
+mod generate;
 mod into;
 mod target;
 
 pub fn derive_convert(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let fields = require_named_field_struct(&input)?;
 
-    let attr = 'bar: {
-        for attr in &input.attrs {
-            if attr.path().is_ident("convert") {
-                break 'bar attr;
-            }
-        }
-        return Err(syn::Error::new(
-            input.span(),
-            "expected `convert` attribute",
-        ));
-    };
+    let mut generates: Vec<GenerateArg> = vec![];
+    let mut targets: Vec<ConvertTarget> = vec![];
 
-    derive_convert_internal(&input, fields, attr)
+    for attr in &input.attrs {
+        if attr.path().is_ident("convert") {
+            targets.extend(ConvertTarget::from_attr(attr)?);
+        }
+        if attr.path().is_ident("generate") {
+            generates.push(attr.parse_args()?);
+        }
+    }
+
+    for generate in &generates {
+        if !targets
+            .iter()
+            .any(|v| v.check_inclusive(&ConvertTarget::Into(generate.into_ident.clone())))
+        {
+            return Err(syn::Error::new(
+                generate.into_ident.span(),
+                format!("`#[into({})` is not in the target", generate.into_ident),
+            ));
+        }
+    }
+
+    derive_convert_internal(targets, generates, &input, fields)
 }
 
 fn derive_convert_internal(
+    struct_targets: Vec<ConvertTarget>,
+    generates: Vec<GenerateArg>,
     input: &syn::DeriveInput,
     fields: &syn::FieldsNamed,
-    attr: &syn::Attribute,
 ) -> syn::Result<TokenStream> {
-    let struct_targets = ConvertTarget::from_attr(attr)?;
-
     let fields = fields
         .named
         .iter()
@@ -73,14 +86,14 @@ fn derive_convert_internal(
                 &generics,
                 &ident,
                 &input.ident,
-                &into::process_into(&ident, &fields)?,
+                &into::process_into(&ident, &fields, &generates)?,
             )),
             ConvertTarget::FromInto(ident) => {
                 let mut into = gen_convert(
                     &generics,
                     &ident,
                     &input.ident,
-                    &into::process_into(&ident, &fields)?,
+                    &into::process_into(&ident, &fields, &generates)?,
                 );
                 let from = gen_convert(
                     &generics,
