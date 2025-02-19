@@ -24,8 +24,5 @@ pub fn main() {
     test(3, Test::Three);
     test(4, Test::Four);
 
-    assert_eq!(
-        serde_json::from_str::<Test>("0").unwrap_err().to_string(),
-        String::from("invalid Test: 0")
-    );
+    assert_eq!(serde_json::from_str::<Test>("0").unwrap(), Test::Four);
 }
