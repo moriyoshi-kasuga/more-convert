@@ -26,8 +26,8 @@ pub fn derive_enum_repr(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     match repr {
         Some(repr) => {
             let option = enum_arg.unwrap_or_default();
-            let fields = EnumReprVariant::from_variants(&option, variants)?;
-            internal::derive_enum_repr_internal(&input, option, fields, repr)
+            let (default, fields) = EnumReprVariant::from_variants(&option, variants)?;
+            internal::derive_enum_repr_internal(&input, option, default, fields, repr)
         }
         None => Err(syn::Error::new(input.span(), "expected `repr` attribute")),
     }
