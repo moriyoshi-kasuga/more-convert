@@ -10,14 +10,23 @@
 
 This crate provides utilities for convert
 
+## Note
+
+Don't worry, `into` attribute such as `Convert` implements `From` internally!
+
+What I write below is what I picked up.
+I try to keep it up to date in [doc.rs](https://docs.rs/more-convert/latest/more_convert), so please look there!
+
 ## Usage
 
 `more-convert` provides a derive macro
 
-- `Convert` automatically implements `From` or `Into` for named structs
+- `Convert` automatically implements `From` for structs
   - Leave the very cumbersome From and Into implementations to us!
   - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
-- `EnumRepr` automatically implements `TryFrom` and `Into` for enums
+- `EnumRepr` Automatically implements [`std::convert::From`] for repr from enum.
+  And implements [`std::convert::TryFrom`] for enum from repr.
+  or implements [`std::convert::From`] for enum from repr.
   - Ideal for managing Type, etc.
   - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
 - `EnumName` provides a method to get the name of the enum variant
@@ -25,9 +34,6 @@ This crate provides utilities for convert
   - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
 
 ## Examples
-
-What I write below is what I picked up.
-I try to keep it up to date in [doc.rs](https://docs.rs/more-convert/latest/more_convert), so please look there!
 
 ### EnumRepr
 

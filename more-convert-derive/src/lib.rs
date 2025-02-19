@@ -6,7 +6,7 @@ macro_rules! use_internal {
     };
 }
 
-/// Automatically implements [`std::convert::From`] for repr on enums.
+/// Automatically implements [`std::convert::From`] for repr from enum.
 /// And implements [`std::convert::TryFrom`] for enum from repr.
 /// or implements [`std::convert::From`] for enum from repr.
 ///
@@ -127,7 +127,7 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     use_internal!(more_convert_derive_internal::derive_enum_repr, input)
 }
 
-/// Automatically implements [`std::convert::From`] and [`std::convert::Into`] on structs.
+/// Automatically implements [`std::convert::From`] on structs.
 ///
 /// # Who uses it:
 ///   - When you are using the architectural
