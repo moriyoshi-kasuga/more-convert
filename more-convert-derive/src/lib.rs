@@ -6,7 +6,9 @@ macro_rules! use_internal {
     };
 }
 
-/// Automatically implements [`std::convert::From`] and [`std::convert::Into`] for repr on enums.
+/// Automatically implements [`std::convert::From`] for repr on enums.
+/// And implements [`std::convert::TryFrom`] for enum from repr.
+/// or implements [`std::convert::From`] for enum from repr.
 ///
 /// # Where to use:
 ///  - Managing Type
@@ -15,13 +17,17 @@ macro_rules! use_internal {
 /// # Note:
 ///  - require `#[repr(u8)]` or `#[repr(u16)]` or ...
 ///  - default is require explicit
+///  - #[enum_repr(default)] is special attribute on variant
 ///
 /// # Enum Attribute:
 ///  - serde: automatically implements [`serde::Serialize`] and [`serde::Deserialize`]
 ///  - implicit: make it less explicit
 ///
 /// # Variant Attribute:
-///  ( Currency no. )
+///  - default: Sets the fallback value if none of the others apply.
+///     this attribute is required to be used only once or not at all
+///     if this attribute is not used, it will be impl [`std::convert::TryFrom`]
+///     used, it will be impl [`std::convert::From`]
 ///
 /// # Examples
 ///
@@ -95,6 +101,26 @@ macro_rules! use_internal {
 ///
 /// assert_eq!(TryInto::<Test>::try_into(1u8).unwrap_err(), String::from("invalid Test: 1"));
 /// ```
+///
+/// ## default
+///
+/// ```rust
+/// use more_convert::EnumRepr;
+/// #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
+/// #[repr(u8)]
+/// pub enum Test {
+///     Zero = 0,
+///     One = 1,
+///     #[enum_repr(default)]
+///     Two = 2,
+/// }
+///
+/// assert_eq!(0u8, Test::Zero.into());
+/// assert_eq!(1u8, Test::One.into());
+/// assert_eq!(2u8, Test::Two.into());
+///
+/// // Invalid values return the default variant
+/// assert_eq!(Test::Two, 255u8.into());
 ///
 #[proc_macro_derive(EnumRepr, attributes(enum_repr))]
 pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
