@@ -57,21 +57,21 @@ more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Conv
 use more_convert::EnumRepr;
 
 #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
+#[enum_repr(implicit, serde)]
 #[repr(u8)]
-#[enum_repr(implicit)]
 pub enum Test {
     Zero,
     Three = 3,
     Four,
 }
 
-assert_eq!(0u8, Test::Zero.into());
-assert_eq!(3u8, Test::Three.into());
-assert_eq!(4u8, Test::Four.into());
+let zero: u8 = Test::Zero.into();
+assert_eq!(0u8, zero);
+assert_eq!(serde_json::to_string(&Test::Zero).unwrap(), "0");
 
-assert_eq!(0u8.try_into(), Ok(Test::Zero));
-assert_eq!(3u8.try_into(), Ok(Test::Three));
-assert_eq!(4u8.try_into(), Ok(Test::Four));
+assert_eq!(serde_json::from_str::<Test>("0").unwrap(), Test::Zero);
+
+assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("invalid Test: 1"));
 ```
 
 ### Convert
@@ -132,14 +132,16 @@ more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Enum
 ```rust
 use more_convert::EnumName;
 
+// not apply rename_all to prefix, Don't forget the underscore.
 #[derive(EnumName)]
+#[enum_name(rename_all = "snake_case", prefix = "error_")]
 pub enum Error {
     InvalidCode,
     ServerError,
 }
 
-assert_eq!("InvalidCode", Error::InvalidCode.enum_name());
-assert_eq!("ServerError", Error::ServerError.enum_name());
+assert_eq!("error_invalid_code", Error::InvalidCode.enum_name());
+assert_eq!("error_server_error", Error::ServerError.enum_name());
 ```
 
 ## License
