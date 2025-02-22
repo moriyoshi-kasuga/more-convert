@@ -12,26 +12,37 @@ This crate provides utilities for convert
 
 ## Note
 
-Don't worry, `into` attribute such as `Convert` implements `From` internally!
+The `Convert` attribute guarantees that the `into` method automatically implements the `From` trait internally, ensuring seamless conversions!
 
-What I write below is what I picked up.
-I try to keep it up to date in [doc.rs](https://docs.rs/more-convert/latest/more_convert), so please look there!
+The information provided below is a summary of key points.
+For the most current and detailed documentation, please refer to [doc.rs](https://docs.rs/more-convert/latest/more_convert).
 
 ## Usage
 
 `more-convert` provides a derive macro
 
-- `Convert` automatically implements `From` for structs
-  - Leave the very cumbersome From and Into implementations to us!
-  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
-- `EnumRepr` Automatically implements [`std::convert::From`] for repr from enum.
-  And implements [`std::convert::TryFrom`] for enum from repr.
-  or implements [`std::convert::From`] for enum from repr.
-  - Ideal for managing Type, etc.
-  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
-- `EnumName` provides a method to get the name of the enum variant
-  - Ideal for error (kind) handling, etc.
-  - more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
+- **Convert**:
+  - This macro is designed to handle simple conversions by automatically implementing
+    the `From` trait for structs.
+  - It aims to eliminate boilerplate code within your architecture, focusing on
+    straightforward use cases.
+  - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
+
+- **EnumRepr**:
+  - This macro primarily implements the `TryFrom` trait for safe conversions from the
+    representation type back to the enum. This ensures that conversions are explicitly
+    handled and potential errors are managed.
+  - Optionally, the `From` trait can be implemented for converting an enum to its
+    representation type when a default value is specified using the `#[enum_repr(default)]`
+    attribute. This provides a fallback mechanism for conversions.
+  - By using enums instead of primitive types like `u8`, it enhances code readability and
+    maintainability, making it easier to manage types and ensure type safety in conversions.
+  - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
+
+- **EnumName** provides a method to retrieve the name of an enum variant as a string.
+  - This is particularly useful for error handling and logging, where understanding the
+    specific variant can aid in debugging and reporting.
+  - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
 
 ## Examples
 
