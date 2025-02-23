@@ -46,6 +46,51 @@ For the most current and detailed documentation, please refer to [doc.rs](https:
 
 ## Examples
 
+### Convert
+
+- field_attributes
+  - ignore: skip the field
+  - rename: rename the field
+  - map
+    - map: map of expr
+    - map_field: map of field
+    - map_struct: map of struct
+
+more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
+
+```rust
+use more_convert::Convert;
+
+#[derive(Convert)]
+#[convert(from(B))]
+pub struct A {
+    #[convert(map = value.sample.to_string())]
+    pub sample: String,
+    // auto into of inner
+    pub opt: Option<u16>,
+    // auto into of inner
+    pub vec: Vec<u16>,
+}
+
+pub struct B {
+    pub sample: u8,
+    pub opt: Option<u8>,
+    pub vec: Vec<u8>,
+}
+
+let b = B {
+    sample: 1u8,
+    opt: Some(0u8),
+    vec: vec![1u8, 2u8],
+};
+
+let a: A = b.into();
+
+assert_eq!(a.sample, String::from("1"));
+assert_eq!(a.opt, Some(0u16));
+assert_eq!(a.vec, vec![1u16, 2u16]);
+```
+
 ### EnumRepr
 
 - enum_attributes
@@ -102,51 +147,6 @@ pub enum Test {
 assert_eq!(Test::Zero, 1u8.into());
 assert_eq!(serde_json::from_str::<Test>("1").unwrap(), Test::Zero);
 
-```
-
-### Convert
-
-- field_attributes
-  - ignore: skip the field
-  - rename: rename the field
-  - map
-    - map: map of expr
-    - map_field: map of field
-    - map_struct: map of struct
-
-more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
-
-```rust
-use more_convert::Convert;
-
-#[derive(Convert)]
-#[convert(from(B))]
-pub struct A {
-    #[convert(map = value.sample.to_string())]
-    pub sample: String,
-    // auto into of inner
-    pub opt: Option<u16>,
-    // auto into of inner
-    pub vec: Vec<u16>,
-}
-
-pub struct B {
-    pub sample: u8,
-    pub opt: Option<u8>,
-    pub vec: Vec<u8>,
-}
-
-let b = B {
-    sample: 1u8,
-    opt: Some(0u8),
-    vec: vec![1u8, 2u8],
-};
-
-let a: A = b.into();
-
-assert_eq!(a.sample, String::from("1"));
-assert_eq!(a.opt, Some(0u16));
-assert_eq!(a.vec, vec![1u16, 2u16]);
 ```
 
 ### EnumName
