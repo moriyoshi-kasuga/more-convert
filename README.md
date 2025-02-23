@@ -122,28 +122,32 @@ use more_convert::Convert;
 #[derive(Convert)]
 #[convert(from(B))]
 pub struct A {
-    pub a: u8,
-    pub b: u8,
+    #[convert(map = value.sample.to_string())]
+    pub sample: String,
+    // auto into of inner
+    pub opt: Option<u16>,
+    // auto into of inner
+    pub vec: Vec<u16>,
 }
 
 pub struct B {
-    pub a: u8,
-    pub b: u8,
+    pub sample: u8,
+    pub opt: Option<u8>,
+    pub vec: Vec<u8>,
 }
 
 let b = B {
-    a: 1u8,
-    b: 2u8,
+    sample: 1u8,
+    opt: Some(0u8),
+    vec: vec![1u8, 2u8],
 };
 
 let a: A = b.into();
 
-assert_eq!(a.a, 1u8);
-assert_eq!(a.b, 2u8);
+assert_eq!(a.sample, String::from("1"));
+assert_eq!(a.opt, Some(0u16));
+assert_eq!(a.vec, vec![1u16, 2u16]);
 ```
-
-more `Into` examples are [here](./more-convert/tests/from/)  
-more `From` examples are [here](./more-convert/tests/into/)
 
 ### EnumName
 
