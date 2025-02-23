@@ -50,8 +50,14 @@ For the most current and detailed documentation, please refer to [doc.rs](https:
 
 - enum_attributes
   - serde: automatically implements `serde::Serialize` and `serde::Deserialize`
+  - implicit: not required to specify the discriminant (not recommended)
 
+- variant_attributres
+  - default: set the fallback value for the `From` trait
+  
 more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.Convert.html)
+
+#### impled TryFrom (not use default attribute)
 
 ```rust
 use more_convert::EnumRepr;
@@ -65,13 +71,37 @@ pub enum Test {
     Four,
 }
 
-let zero: u8 = Test::Zero.into();
-assert_eq!(0u8, zero);
+assert_eq!(u8::from(Test::Zero), 0u8);
 assert_eq!(serde_json::to_string(&Test::Zero).unwrap(), "0");
 
 assert_eq!(serde_json::from_str::<Test>("0").unwrap(), Test::Zero);
 
+// return error with unknown value 
+assert_eq!(Test::try_from(1).unwrap_err().to_string(), String::from("invalid Test: 1"));
 assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("invalid Test: 1"));
+```
+
+#### impled From (use default attribute)
+
+```rust
+use more_convert::EnumRepr;
+
+#[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
+#[enum_repr(implicit, serde)]
+#[repr(u8)]
+pub enum Test {
+  #[enum_repr(default)]
+  Zero,
+  Three = 3,
+  Four,
+}
+
+// return fallback with unknown value
+
+// impled From
+assert_eq!(Test::Zero, 1u8.into());
+assert_eq!(serde_json::from_str::<Test>("1").unwrap(), Test::Zero);
+
 ```
 
 ### Convert
