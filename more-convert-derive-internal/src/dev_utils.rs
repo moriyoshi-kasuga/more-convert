@@ -1,3 +1,4 @@
+use convert_case::Case;
 use syn::{meta::ParseNestedMeta, Meta, Type};
 
 pub(crate) fn require_named_field_struct(
@@ -145,4 +146,20 @@ pub(crate) fn parse_nested_attr(
     attr.parse_nested_meta(logic)?;
 
     Ok(())
+}
+
+pub(crate) fn from_str_to_case(text: &str) -> Option<Case> {
+    let case = match text {
+        "lowercase" => Case::Lower,
+        "UPPERCASE" => Case::Upper,
+        "PascalCase" => Case::Pascal,
+        "camelCase" => Case::Camel,
+        "snake_case" => Case::Snake,
+        "SCREAMING_SNAKE_CASE" => Case::UpperSnake,
+        "kebab-case" => Case::Kebab,
+        "SCREAMING-KEBAB-CASE" => Case::UpperKebab,
+        _ => return None,
+    };
+
+    Some(case)
 }

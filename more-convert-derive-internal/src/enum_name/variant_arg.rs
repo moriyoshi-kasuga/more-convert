@@ -1,3 +1,4 @@
+use convert_case::Casing;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{spanned::Spanned, Ident, Meta, Type};
@@ -76,7 +77,9 @@ impl<'a> EnumNameVariantArg<'a> {
             Some(x) => x,
             None => {
                 let mut name = unraw(&variant.ident);
-                name = enum_arg.rename_all.apply_to_variant(name);
+                if let Some(rename_all) = enum_arg.rename_all {
+                    name = name.to_case(rename_all);
+                }
                 if let Some(prefix) = &enum_arg.prefix {
                     name = format!("{prefix}{name}");
                 };

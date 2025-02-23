@@ -1,19 +1,17 @@
-use std::str::FromStr;
-
-use ident_case::RenameRule;
+use convert_case::Case;
 use syn::{spanned::Spanned, Meta};
 
-use crate::{check_duplicate, parse_meta_attrs, require_lit_str};
+use crate::{check_duplicate, from_str_to_case, parse_meta_attrs, require_lit_str};
 
 pub(crate) struct EnumNameEnumArg {
-    pub rename_all: RenameRule,
+    pub rename_all: Option<Case>,
     pub prefix: Option<String>,
     pub suffix: Option<String>,
 }
 
 impl EnumNameEnumArg {
     pub(crate) fn from_derive(derive: &syn::DeriveInput) -> syn::Result<Self> {
-        let mut rename_all: Option<RenameRule> = None;
+        let mut rename_all: Option<Case> = None;
         let mut prefix: Option<String> = None;
         let mut suffix: Option<String> = None;
 
@@ -25,8 +23,8 @@ impl EnumNameEnumArg {
                     let string = require_lit_str(&meta, &meta.value)?;
 
                     rename_all = Some(
-                        RenameRule::from_str(&string)
-                            .map_err(|_| syn::Error::new(meta.span(), "invalid RenameRule"))?,
+                        from_str_to_case(&string)
+                            .ok_or_else(|| syn::Error::new(meta.span(), "invalid rename_all"))?,
                     );
                 }
                 Meta::NameValue(meta) if meta.path.is_ident("prefix") => {
@@ -49,7 +47,7 @@ impl EnumNameEnumArg {
         })?;
 
         Ok(EnumNameEnumArg {
-            rename_all: rename_all.unwrap_or(RenameRule::None),
+            rename_all,
             prefix,
             suffix,
         })
