@@ -26,9 +26,25 @@ pub fn derive_enum_name(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         body.push(variant_arg);
     }
 
+    let impl_token = if enum_arg.without_trait {
+        quote::quote! {
+            #ident
+        }
+    } else {
+        quote::quote! {
+            more_convert::EnumName for #ident
+        }
+    };
+
+    let fn_token = if enum_arg.without_trait {
+        quote::quote! { const fn }
+    } else {
+        quote::quote! { fn }
+    };
+
     let token = quote::quote! {
-        impl #impl_generics more_convert::EnumName for #ident #ty_generics #where_clause {
-            fn enum_name(&self) -> &'static str {
+        impl #impl_generics #impl_token #ty_generics #where_clause {
+            #fn_token enum_name(&self) -> &'static str {
                 match self {
                     #(
                         #ident::#variant_name #matches => #body,

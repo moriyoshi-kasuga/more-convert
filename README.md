@@ -153,6 +153,7 @@ assert_eq!(serde_json::from_str::<Test>("1").unwrap(), Test::Zero);
 
 - enum_attributes
 
+  - without_tarit: without `more_convert::EnumName` trait and definition fn as `const` (and the caller does not need to depend on this crate)
   - rename_all: apply rule to field name
     - Possible values: "lowercase", "UPPERCASE", "PascalCase", "camelCase", "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE"
   - prefix: add prefix to field name

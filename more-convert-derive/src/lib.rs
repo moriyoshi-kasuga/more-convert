@@ -407,6 +407,25 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 /// assert_eq!("InnerB", Inner::B.enum_name());
 /// ```
 ///
+/// ## without_trait
+/// ```rust
+/// #[derive(more_convert::EnumName)]
+/// #[enum_name(without_trait)]
+/// pub enum Error {
+///  InvalidCode,
+///  ServerError,
+/// }
+///
+/// // call at const
+/// const INVALID_CODE: &str = Error::InvalidCode.enum_name();
+///
+/// mod test {
+///     fn something() {
+///         // not depend on EnumName trait
+///         super::Error::InvalidCode.enum_name();
+///     }
+/// }
+///
 #[proc_macro_derive(EnumName, attributes(enum_name))]
 pub fn derive_enum_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_enum_name, input)

@@ -4,6 +4,7 @@ use syn::{spanned::Spanned, Meta};
 use crate::{check_duplicate, from_str_to_case, parse_meta_attrs, require_lit_str};
 
 pub(crate) struct EnumNameEnumArg {
+    pub without_trait: bool,
     pub rename_all: Option<Case>,
     pub prefix: Option<String>,
     pub suffix: Option<String>,
@@ -14,6 +15,7 @@ impl EnumNameEnumArg {
         let mut rename_all: Option<Case> = None;
         let mut prefix: Option<String> = None;
         let mut suffix: Option<String> = None;
+        let mut without_trait = false;
 
         parse_meta_attrs("enum_name", &derive.attrs, |meta| {
             match meta {
@@ -41,12 +43,18 @@ impl EnumNameEnumArg {
 
                     suffix = Some(string);
                 }
+                Meta::Path(meta) if meta.is_ident("without_trait") => {
+                    check_duplicate!(meta.span(), without_trait, without_trait);
+
+                    without_trait = true;
+                }
                 _ => return Err(syn::Error::new(meta.span(), "unexpected attribute")),
             }
             Ok(())
         })?;
 
         Ok(EnumNameEnumArg {
+            without_trait,
             rename_all,
             prefix,
             suffix,
