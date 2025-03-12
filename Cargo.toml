@@ -10,7 +10,7 @@ members = [
 more-convert = { path = "more-convert" }
 
 [workspace.package]
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 rust-version = "1.80"
 description = "This crate adds macros for various conversions."
