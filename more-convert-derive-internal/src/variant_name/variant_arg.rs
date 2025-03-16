@@ -5,22 +5,22 @@ use syn::{spanned::Spanned, Ident, Meta, Type};
 
 use crate::{check_duplicate, parse_meta_attrs, require_lit_str, unraw};
 
-use super::enum_arg::EnumNameEnumArg;
+use super::enum_arg::VariantNameEnumArg;
 
-pub(crate) struct EnumNameVariantArg<'a> {
+pub(crate) struct VariantNameVariantArg<'a> {
     pub name: String,
     pub nest: Option<(&'a Option<Ident>, &'a Type)>,
 }
 
-impl<'a> EnumNameVariantArg<'a> {
+impl<'a> VariantNameVariantArg<'a> {
     pub(crate) fn into_token(self) -> (TokenStream, TokenStream) {
         if let Some((ident, ty)) = self.nest {
             let matches = match ident {
-                Some(ident) => quote::quote! { { #ident: _nested_enum_name, .. } },
-                None => quote::quote! { (_nested_enum_name) },
+                Some(ident) => quote::quote! { { #ident: _nested_variant_name, .. } },
+                None => quote::quote! { (_nested_variant_name) },
             };
             let expr = quote::quote! {
-                <#ty as ::more_convert::EnumName>::enum_name(_nested_enum_name)
+                <#ty as ::more_convert::VariantName>::variant_name(_nested_variant_name)
             };
 
             (matches, expr)
@@ -35,12 +35,12 @@ impl<'a> EnumNameVariantArg<'a> {
 
     pub(crate) fn from_variant(
         variant: &'a syn::Variant,
-        enum_arg: &EnumNameEnumArg,
+        enum_arg: &VariantNameEnumArg,
     ) -> syn::Result<Self> {
         let mut rename: Option<String> = None;
         let mut nest: Option<(&'a Option<Ident>, &'a Type)> = None;
 
-        parse_meta_attrs("enum_name", &variant.attrs, |meta| {
+        parse_meta_attrs("variant_name", &variant.attrs, |meta| {
             match meta {
                 Meta::NameValue(meta) if meta.path.is_ident("rename") => {
                     check_duplicate!(meta.span(), rename);

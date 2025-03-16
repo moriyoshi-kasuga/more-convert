@@ -4,8 +4,8 @@ pub use enum_repr::derive_enum_repr;
 mod convert;
 pub use convert::derive_convert;
 
-mod enum_name;
-pub use enum_name::derive_enum_name;
+mod variant_name;
+pub use variant_name::derive_variant_name;
 
 mod dev_utils;
 pub(crate) use dev_utils::*;

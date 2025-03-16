@@ -3,21 +3,21 @@ use syn::{spanned::Spanned, Meta};
 
 use crate::{check_duplicate, from_str_to_case, parse_meta_attrs, require_lit_str};
 
-pub(crate) struct EnumNameEnumArg {
+pub(crate) struct VariantNameEnumArg {
     pub without_trait: bool,
     pub rename_all: Option<Case>,
     pub prefix: Option<String>,
     pub suffix: Option<String>,
 }
 
-impl EnumNameEnumArg {
+impl VariantNameEnumArg {
     pub(crate) fn from_derive(derive: &syn::DeriveInput) -> syn::Result<Self> {
         let mut rename_all: Option<Case> = None;
         let mut prefix: Option<String> = None;
         let mut suffix: Option<String> = None;
         let mut without_trait = false;
 
-        parse_meta_attrs("enum_name", &derive.attrs, |meta| {
+        parse_meta_attrs("variant_name", &derive.attrs, |meta| {
             match meta {
                 Meta::NameValue(meta) if meta.path.is_ident("rename_all") => {
                     check_duplicate!(meta.span(), rename_all);
@@ -53,7 +53,7 @@ impl EnumNameEnumArg {
             Ok(())
         })?;
 
-        Ok(EnumNameEnumArg {
+        Ok(VariantNameEnumArg {
             without_trait,
             rename_all,
             prefix,

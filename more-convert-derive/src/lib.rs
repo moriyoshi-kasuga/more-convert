@@ -311,7 +311,7 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     use_internal!(more_convert_derive_internal::derive_convert, input)
 }
 
-/// Automatically implements [`more_convert::EnumName`] on enum
+/// Automatically implements [`more_convert::VariantName`] on enum
 ///
 /// # Where to use:
 ///   - Only want the kind
@@ -329,104 +329,104 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// # Variant Attribute:
 ///  - rename: rename field, (prefix, suffix and rename_all are not applied)
-///  - nest: call EnumName on the first field of the variant
+///  - nest: call VariantName on the first field of the variant
 ///
 /// # Examples
 ///
 /// ## Normal
 ///
 /// ```rust
-/// use more_convert::EnumName;
+/// use more_convert::VariantName;
 ///
-/// #[derive(EnumName)]
+/// #[derive(VariantName)]
 /// pub enum Error {
 ///   InvalidCode,
 ///   ServerError,
 /// }
 ///
-/// assert_eq!("InvalidCode", Error::InvalidCode.enum_name());
-/// assert_eq!("ServerError", Error::ServerError.enum_name());
+/// assert_eq!("InvalidCode", Error::InvalidCode.variant_name());
+/// assert_eq!("ServerError", Error::ServerError.variant_name());
 /// ```
 ///
 /// ## rename and rename_all
 ///
 /// ```rust
-/// use more_convert::EnumName;
+/// use more_convert::VariantName;
 ///
-/// #[derive(EnumName)]
-/// #[enum_name(rename_all = "snake_case")]
+/// #[derive(VariantName)]
+/// #[variant_name(rename_all = "snake_case")]
 /// pub enum Error {
 ///   InvalidCode,
 ///   ServerError,
-///   #[enum_name(rename = "NotFound")]
+///   #[variant_name(rename = "NotFound")]
 ///   NotFoundError,
 /// }
 ///
-/// assert_eq!("invalid_code", Error::InvalidCode.enum_name());
-/// assert_eq!("server_error", Error::ServerError.enum_name());
-/// assert_eq!("NotFound", Error::NotFoundError.enum_name());
+/// assert_eq!("invalid_code", Error::InvalidCode.variant_name());
+/// assert_eq!("server_error", Error::ServerError.variant_name());
+/// assert_eq!("NotFound", Error::NotFoundError.variant_name());
 /// ```
 ///
 /// ## prefix and suffix
 /// ```rust
-/// use more_convert::EnumName;
+/// use more_convert::VariantName;
 ///
-/// #[derive(EnumName)]
-/// #[enum_name(prefix = "Error", suffix  = "What")]
+/// #[derive(VariantName)]
+/// #[variant_name(prefix = "Error", suffix  = "What")]
 /// pub enum Error {
 ///  InvalidCode,
 ///  ServerError,
 /// }
 ///
-/// assert_eq!("ErrorInvalidCodeWhat", Error::InvalidCode.enum_name());
-/// assert_eq!("ErrorServerErrorWhat", Error::ServerError.enum_name());
+/// assert_eq!("ErrorInvalidCodeWhat", Error::InvalidCode.variant_name());
+/// assert_eq!("ErrorServerErrorWhat", Error::ServerError.variant_name());
 /// ```
 ///
 /// ## nest
 /// ```rust
-/// use more_convert::EnumName;
+/// use more_convert::VariantName;
 ///
-/// #[derive(EnumName)]
-/// #[enum_name(prefix = "Inner")]
+/// #[derive(VariantName)]
+/// #[variant_name(prefix = "Inner")]
 /// pub enum Inner {
 ///     A,
 ///     B,
 /// }
 ///
-/// #[derive(EnumName)]
-/// pub enum TestEnumName {
+/// #[derive(VariantName)]
+/// pub enum TestVariantName {
 ///     InvalidCode,
 ///
-///     #[enum_name(nest)]
+///     #[variant_name(nest)]
 ///     Inner(Inner),
 /// }
 ///
-/// assert_eq!("InvalidCode", TestEnumName::InvalidCode.enum_name());
+/// assert_eq!("InvalidCode", TestVariantName::InvalidCode.variant_name());
 ///
-/// assert_eq!("InnerA", Inner::A.enum_name());
-/// assert_eq!("InnerB", Inner::B.enum_name());
+/// assert_eq!("InnerA", Inner::A.variant_name());
+/// assert_eq!("InnerB", Inner::B.variant_name());
 /// ```
 ///
 /// ## without_trait
 /// ```rust
-/// #[derive(more_convert::EnumName)]
-/// #[enum_name(without_trait)]
+/// #[derive(more_convert::VariantName)]
+/// #[variant_name(without_trait)]
 /// pub enum Error {
 ///  InvalidCode,
 ///  ServerError,
 /// }
 ///
 /// // call at const
-/// const INVALID_CODE: &str = Error::InvalidCode.enum_name();
+/// const INVALID_CODE: &str = Error::InvalidCode.variant_name();
 ///
 /// mod test {
 ///     fn something() {
-///         // not depend on EnumName trait
-///         super::Error::InvalidCode.enum_name();
+///         // not depend on VariantName trait
+///         super::Error::InvalidCode.variant_name();
 ///     }
 /// }
 ///
-#[proc_macro_derive(EnumName, attributes(enum_name))]
-pub fn derive_enum_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    use_internal!(more_convert_derive_internal::derive_enum_name, input)
+#[proc_macro_derive(VariantName, attributes(variant_name))]
+pub fn derive_variant_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    use_internal!(more_convert_derive_internal::derive_variant_name, input)
 }
