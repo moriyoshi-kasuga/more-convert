@@ -7,9 +7,7 @@ pub use more_convert_derive::EnumRepr;
 pub mod enum_name;
 pub use enum_name::EnumName;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "utils")] {
-        pub mod utils;
-        pub use utils::*;
-    }
-}
+#[cfg(feature = "utils")]
+pub mod utils;
+#[cfg(feature = "utils")]
+pub use utils::*;

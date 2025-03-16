@@ -20,7 +20,6 @@ utils = []
 [dependencies]
 more-convert-derive = { version = "0", path = "../more-convert-derive" }
 
-cfg-if.workspace = true
 syn.workspace = true
 thiserror.workspace = true
 
