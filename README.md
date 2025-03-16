@@ -39,10 +39,10 @@ For the most current and detailed documentation, please refer to [doc.rs](https:
     maintainability, making it easier to manage types and ensure type safety in conversions.
   - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumRepr.html)
 
-- **EnumName** provides a method to retrieve the name of an enum variant as a string.
+- **VariantName** provides a method to retrieve the name of an enum variant as a string.
   - This is particularly useful for error handling and logging, where understanding the
     specific variant can aid in debugging and reporting.
-  - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
+  - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.VariantName.html)
 
 ## Examples
 
@@ -149,11 +149,11 @@ assert_eq!(serde_json::from_str::<Test>("1").unwrap(), Test::Zero);
 
 ```
 
-### EnumName
+### VariantName
 
 - enum_attributes
 
-  - without_tarit: without `more_convert::EnumName` trait and definition fn as `const` (and the caller does not need to depend on this crate)
+  - without_tarit: without `more_convert::VariantName` trait and definition fn as `const` (and the caller does not need to depend on this crate)
   - rename_all: apply rule to field name
     - Possible values: "lowercase", "UPPERCASE", "PascalCase", "camelCase", "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case", "SCREAMING-KEBAB-CASE"
   - prefix: add prefix to field name
@@ -162,21 +162,21 @@ assert_eq!(serde_json::from_str::<Test>("1").unwrap(), Test::Zero);
 - variant_attributes
   - rename: rename field (prefix, suffix, and rename_all are not applied)
 
-more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.EnumName.html)
+more info: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.VariantName.html)
 
 ```rust
-use more_convert::EnumName;
+use more_convert::VariantName;
 
 // not apply rename_all to prefix, Don't forget the underscore.
-#[derive(EnumName)]
-#[enum_name(rename_all = "snake_case", prefix = "error_")]
+#[derive(VariantName)]
+#[variant_name(rename_all = "snake_case", prefix = "error_")]
 pub enum Error {
     InvalidCode,
     ServerError,
 }
 
-assert_eq!("error_invalid_code", Error::InvalidCode.enum_name());
-assert_eq!("error_server_error", Error::ServerError.enum_name());
+assert_eq!("error_invalid_code", Error::InvalidCode.variant_name());
+assert_eq!("error_server_error", Error::ServerError.variant_name());
 ```
 
 ## License
