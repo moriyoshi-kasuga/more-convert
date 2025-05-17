@@ -25,9 +25,9 @@ macro_rules! use_internal {
 ///
 /// # Variant Attribute:
 ///  - default: Sets the fallback value if none of the others apply.
-///     this attribute is required to be used only once or not at all
-///     if this attribute is not used, it will be impl [`std::convert::TryFrom`]
-///     used, it will be impl [`std::convert::From`]
+///    this attribute is required to be used only once or not at all
+///    if this attribute is not used, it will be impl [`std::convert::TryFrom`]
+///    used, it will be impl [`std::convert::From`]
 ///
 /// # Examples
 ///
