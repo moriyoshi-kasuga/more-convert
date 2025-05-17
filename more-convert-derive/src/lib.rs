@@ -51,7 +51,7 @@ macro_rules! use_internal {
 /// assert_eq!(3u8.try_into(), Ok(Test::Three));
 /// assert_eq!(4u8.try_into(), Ok(Test::Four));
 ///
-/// assert_eq!(TryInto::<Test>::try_into(1u8).unwrap_err(), String::from("invalid Test: 1"));
+/// assert_eq!(TryInto::<Test>::try_into(1u8).unwrap_err(), more_convert::TryFromEnumReprError::new("Test".to_string(), 1.to_string()));
 /// ```
 ///
 /// ## serde
@@ -76,7 +76,7 @@ macro_rules! use_internal {
 /// assert_eq!(serde_json::from_str::<Test>("3").unwrap(), Test::Three);
 /// assert_eq!(serde_json::from_str::<Test>("4").unwrap(), Test::Four);
 ///
-/// assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("invalid Test: 1"));
+/// assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("Failed to convert value 1 to enum Test"));
 /// ```
 /// ## implicit
 ///
@@ -99,7 +99,7 @@ macro_rules! use_internal {
 /// assert_eq!(3u8.try_into(), Ok(Test::Three));
 /// assert_eq!(4u8.try_into(), Ok(Test::Four));
 ///
-/// assert_eq!(TryInto::<Test>::try_into(1u8).unwrap_err(), String::from("invalid Test: 1"));
+/// assert_eq!(TryInto::<Test>::try_into(1u8).unwrap_err(), more_convert::TryFromEnumReprError::new("Test".to_string(), 1.to_string()));
 /// ```
 ///
 /// ## default
@@ -422,10 +422,12 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 /// mod test {
 ///     fn something() {
 ///         // not depend on VariantName trait
-///         super::Error::InvalidCode.variant_name();
+///         crate::Error::InvalidCode.variant_name();
 ///     }
 /// }
 ///
+/// # fn main() {}
+/// ```
 #[proc_macro_derive(VariantName, attributes(variant_name))]
 pub fn derive_variant_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_variant_name, input)

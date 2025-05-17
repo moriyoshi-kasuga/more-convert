@@ -4,3 +4,9 @@ pub struct TryFromEnumReprError {
     pub enum_name: String,
     pub value: String,
 }
+
+impl TryFromEnumReprError {
+    pub fn new(enum_name: String, value: String) -> Self {
+        Self { enum_name, value }
+    }
+}

@@ -122,8 +122,8 @@ assert_eq!(serde_json::to_string(&Test::Zero).unwrap(), "0");
 assert_eq!(serde_json::from_str::<Test>("0").unwrap(), Test::Zero);
 
 // return error with unknown value 
-assert_eq!(Test::try_from(1).unwrap_err().to_string(), String::from("invalid Test: 1"));
-assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("invalid Test: 1"));
+assert_eq!(Test::try_from(1).unwrap_err().to_string(), String::from("Failed to convert value 1 to enum Test"));
+assert_eq!(serde_json::from_str::<Test>("1").unwrap_err().to_string(), String::from("Failed to convert value 1 to enum Test"));
 ```
 
 #### impled From (use default attribute)
