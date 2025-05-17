@@ -3,6 +3,7 @@
 pub use more_convert_derive::Convert;
 pub use more_convert_derive::EnumRepr;
 pub use more_convert_derive::VariantName;
+pub use more_convert_derive::EnumArray;
 
 pub mod enum_repr;
 pub use enum_repr::TryFromEnumReprError;

@@ -1,5 +1,6 @@
 #![cfg(test)]
 
+pub mod enum_array;
 pub mod enum_repr;
 pub mod from;
 pub mod from_into;

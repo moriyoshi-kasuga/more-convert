@@ -432,3 +432,40 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 pub fn derive_variant_name(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     use_internal!(more_convert_derive_internal::derive_variant_name, input)
 }
+
+/// Automatically generate a `COUNT` and `VARIANTS` constant for enum.
+///
+/// # Where to use:
+/// - When you want to all variants of enum
+/// - When you want to count of enum
+///
+/// # Note:
+/// - `VARIANTS` order is same as enum definition order.
+///   not calculate the discriminant value.
+///
+///
+/// # EnumAttribute: none
+/// # Variant Attribute: none
+///
+/// # Examples
+///
+/// ## Normal
+///
+/// ```rust
+/// use more_convert::EnumArray;
+/// #[derive(EnumArray, Clone, Copy, Debug, PartialEq)]
+/// pub enum Test {
+///     Zero = 1,
+///     Three = 3,
+///     Two = 2,
+/// }
+///
+/// assert_eq!(Test::COUNT, 3usize);
+/// // order is same as enum definition order.
+/// // not calculate the discriminant value.
+/// assert_eq!(Test::VARIANTS, &[Test::Zero, Test::Three, Test::Two]);
+/// ```
+#[proc_macro_derive(EnumArray, attributes(enum_array))]
+pub fn derive_enum_array(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    use_internal!(more_convert_derive_internal::derive_enum_array, input)
+}

@@ -44,6 +44,12 @@ For the most current and detailed documentation, please refer to [doc.rs](https:
     specific variant can aid in debugging and reporting.
   - For more detailed information, please visit: [doc.rs](https://docs.rs/more-convert/latest/more_convert/derive.VariantName.html)
 
+- **EnumArray**
+  - It automatically implements the `COUNT` and `VARIANTS` const, which return the number of
+    variants and an array of all variants, respectively.
+  - This is useful when you need to iterate over every possible value of
+    an enum or perform operations on each variant.
+
 ## Examples
 
 ### Convert
@@ -177,6 +183,25 @@ pub enum Error {
 
 assert_eq!("error_invalid_code", Error::InvalidCode.variant_name());
 assert_eq!("error_server_error", Error::ServerError.variant_name());
+```
+
+## EnumArray
+
+- enum_attributes: none
+- variant_attributes: none
+
+```rust
+use more_convert::EnumArray;
+
+#[derive(Debug, PartialEq, EnumArray)]
+pub enum Test {
+    Zero,
+    Two,
+    Three,
+}
+
+assert_eq!(Test::COUNT, 3usize);
+assert_eq!(Test::VARIANTS, &[Test::Zero, Test::Two, Test::Three]);
 ```
 
 ## License

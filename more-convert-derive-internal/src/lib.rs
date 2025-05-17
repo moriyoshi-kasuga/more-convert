@@ -7,6 +7,9 @@ pub use convert::derive_convert;
 mod variant_name;
 pub use variant_name::derive_variant_name;
 
+mod enum_array;
+pub use enum_array::derive_enum_array;
+
 mod dev_utils;
 pub(crate) use dev_utils::*;
 
