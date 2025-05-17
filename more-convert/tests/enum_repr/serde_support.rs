@@ -25,6 +25,6 @@ pub fn main() {
 
     assert_eq!(
         serde_json::from_str::<Test>("0").unwrap_err().to_string(),
-        String::from("invalid Test: 0")
+        String::from("Failed to convert value 0 to enum Test")
     );
 }

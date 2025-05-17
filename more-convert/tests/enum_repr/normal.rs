@@ -1,4 +1,4 @@
-use more_convert::EnumRepr;
+use more_convert::{EnumRepr, TryFromEnumReprError};
 
 #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 #[repr(u16)]
@@ -25,6 +25,9 @@ pub fn main() {
 
     assert_eq!(
         TryInto::<Test>::try_into(1u16).unwrap_err(),
-        String::from("invalid Test: 1")
+        TryFromEnumReprError {
+            enum_name: "Test".to_string(),
+            value: "1".to_string()
+        }
     );
 }

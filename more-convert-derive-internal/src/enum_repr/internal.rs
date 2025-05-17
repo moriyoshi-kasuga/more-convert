@@ -36,12 +36,15 @@ pub(crate) fn derive_enum_repr_internal(
         },
         None => quote::quote! {
             impl #impl_generics TryFrom<#repr> for #ident #ty_generics #where_clause {
-                type Error = String;
+                type Error = more_convert::TryFromEnumReprError;
 
                 fn try_from(value: #repr) -> Result<Self, Self::Error> {
                     Ok(match value {
                         #(#discriminant_idents => Self::#idents,)*
-                        _ => return Err(format!(concat!("invalid ", stringify!(#ident), ": {}"), value)),
+                        _ => return Err(more_convert::TryFromEnumReprError {
+                            enum_name: stringify!(#ident).to_string(),
+                            value: value.to_string(),
+                        }),
                     })
                 }
             }

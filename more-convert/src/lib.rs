@@ -4,6 +4,9 @@ pub use more_convert_derive::Convert;
 pub use more_convert_derive::EnumRepr;
 pub use more_convert_derive::VariantName;
 
+pub mod enum_repr;
+pub use enum_repr::TryFromEnumReprError;
+
 pub mod variant_name;
 pub use variant_name::VariantName;
 
