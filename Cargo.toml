@@ -1,16 +1,16 @@
 [workspace]
 resolver = "2"
 members = [
-    "more-convert",
-    "more-convert-derive",
-    "more-convert-derive-internal",
+  "more-convert",
+  "more-convert-derive",
+  "more-convert-derive-internal",
 ]
 
 [patch.crates-io]
 more-convert = { path = "more-convert" }
 
 [workspace.package]
-version = "0.11.1"
+version = "0.12.0"
 edition = "2021"
 rust-version = "1.80"
 description = "This crate adds macros for various conversions."
