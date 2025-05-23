@@ -60,7 +60,9 @@ pub(crate) fn derive_enum_repr_internal(
 
             impl #impl_generics From<#ident> for #repr #ty_generics #where_clause {
                 fn from(value: #ident) -> Self {
-                    value as #repr
+                    match value {
+                        #(#ident::#idents => #discriminant_idents,)*
+                    }
                 }
             }
 
@@ -101,7 +103,7 @@ pub(crate) fn derive_enum_repr_internal(
                 where
                     S: serde::Serializer,
                 {
-                    serializer.#serde(*self as #repr)
+                    serializer.#serde((*self).into())
                 }
             }
 
