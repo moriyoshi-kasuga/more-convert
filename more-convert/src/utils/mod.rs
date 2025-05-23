@@ -1,2 +1,2 @@
-pub mod vec_into;
+mod vec_into;
 pub use vec_into::VecInto;
