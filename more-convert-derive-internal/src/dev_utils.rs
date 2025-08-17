@@ -1,5 +1,5 @@
 use convert_case::Case;
-use syn::{meta::ParseNestedMeta, Meta, Type};
+use syn::{meta::ParseNestedMeta, Type};
 
 pub(crate) fn require_named_field_struct(
     input: &syn::DeriveInput,
@@ -72,56 +72,11 @@ macro_rules! check_duplicate {
 
 pub(crate) use check_duplicate;
 
-pub(crate) fn require_lit_str<S: syn::spanned::Spanned>(
-    span: &S,
-    expr: &syn::Expr,
-) -> syn::Result<String> {
-    if let syn::Expr::Lit(expr_lit) = &expr {
-        if let syn::Lit::Str(lit_str) = &expr_lit.lit {
-            return Ok(lit_str.value());
-        }
-    }
-
-    Err(syn::Error::new(span.span(), "expected string literal"))
-}
-
 pub(crate) fn unraw(ident: &proc_macro2::Ident) -> String {
     ident.to_string().trim_start_matches("r#").to_owned()
 }
 
 pub(crate) type AttrMetas = syn::punctuated::Punctuated<syn::Meta, syn::Token![,]>;
-
-pub(crate) fn parse_meta_attrs<F>(
-    name: &'static str,
-    attrs: &[syn::Attribute],
-    mut func: F,
-) -> syn::Result<bool>
-where
-    F: FnMut(Meta) -> syn::Result<()>,
-{
-    let mut has_attr = false;
-    for attr in attrs {
-        if attr.path().is_ident(name) {
-            has_attr = true;
-            parse_meta_attr(attr, &mut func)?;
-        }
-    }
-
-    Ok(has_attr)
-}
-
-pub(crate) fn parse_meta_attr<F>(attr: &syn::Attribute, mut func: F) -> syn::Result<()>
-where
-    F: FnMut(Meta) -> syn::Result<()>,
-{
-    let nested = attr.parse_args_with(AttrMetas::parse_terminated)?;
-
-    for meta in nested {
-        func(meta)?;
-    }
-
-    Ok(())
-}
 
 pub(crate) fn parse_nested_attrs(
     name: &'static str,
