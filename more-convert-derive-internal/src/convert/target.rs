@@ -1,73 +1,125 @@
-use syn::{spanned::Spanned, Ident, Meta, MetaList};
+use syn::{parenthesized, parse::Parse, punctuated::Punctuated, Ident, Meta, Token};
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum ConvertTarget {
-    From(Ident),
-    Into(Ident),
-    FromInto(Ident),
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub(crate) struct Conversion {
+    pub from: Ident,
+    pub to: Ident,
 }
 
 const EXPECT_TARGET: &str = "expected `from`, `into` or `from_into`";
 
-impl ConvertTarget {
-    pub(crate) fn check_inclusive(&self, other: &Self) -> bool {
-        match (self, other) {
-            (ConvertTarget::FromInto(self_ident), other) => {
-                let ident = match other {
-                    ConvertTarget::FromInto(ident) => ident,
-                    ConvertTarget::From(ident) => ident,
-                    ConvertTarget::Into(ident) => ident,
-                };
-                self_ident == ident
+// A single keyword argument, e.g., `from(A, B)`
+struct ConvertArg {
+    keyword: Ident,
+    types: Punctuated<Ident, Token![,]>,
+}
+
+impl Parse for ConvertArg {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let keyword: Ident = input.parse()?;
+        let content;
+        parenthesized!(content in input);
+        let types = content.parse_terminated(Ident::parse, Token![,])?;
+
+        match keyword.to_string().as_str() {
+            "from" | "into" | "from_into" => Ok(Self { keyword, types }),
+            _ => Err(syn::Error::new(keyword.span(), EXPECT_TARGET)),
+        }
+    }
+}
+
+// The full list of arguments in `#[convert(...)]`
+pub(crate) struct ConvertArgs(Punctuated<ConvertArg, Token![,]>);
+
+impl Parse for ConvertArgs {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(input.parse_terminated(ConvertArg::parse, Token![,])?))
+    }
+}
+
+impl ConvertArgs {
+    pub(crate) fn into_conversions(self, self_ident: &Ident) -> syn::Result<Vec<Conversion>> {
+        let mut conversions = Vec::new();
+        for arg in self.0 {
+            let keyword = arg.keyword.to_string();
+            for ty in arg.types {
+                match keyword.as_str() {
+                    "from" => conversions.push(Conversion {
+                        from: ty,
+                        to: self_ident.clone(),
+                    }),
+                    "into" => conversions.push(Conversion {
+                        from: self_ident.clone(),
+                        to: ty,
+                    }),
+                    "from_into" => {
+                        conversions.push(Conversion {
+                            from: ty.clone(),
+                            to: self_ident.clone(),
+                        });
+                        conversions.push(Conversion {
+                            from: self_ident.clone(),
+                            to: ty,
+                        });
+                    }
+                    _ => unreachable!(), // Checked in Parse impl
+                }
             }
-            _ => self.eq(other),
         }
+        conversions.sort();
+        conversions.dedup();
+        Ok(conversions)
     }
-    pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Vec<Self>> {
-        type Targets = syn::punctuated::Punctuated<syn::MetaList, syn::Token![,]>;
-        let targets = attr.parse_args_with(Targets::parse_terminated)?;
+}
 
-        Ok(targets
-            .iter()
-            .map(Self::from_meta_list)
-            .collect::<syn::Result<Vec<Vec<Self>>>>()?
-            .into_iter()
-            .flatten()
-            .collect())
-    }
+// For parsing field-level attributes like `#[convert(from(A), ...)]`
+pub(crate) fn parse_field_conversion_meta(
+    meta: &Meta,
+    self_ident: &Ident,
+) -> syn::Result<Option<Vec<Conversion>>> {
+    let list = match meta {
+        Meta::List(list) => list,
+        _ => return Ok(None),
+    };
 
-    pub(crate) fn from_meta_list(list: &MetaList) -> syn::Result<Vec<Self>> {
-        type Idents = syn::punctuated::Punctuated<syn::Ident, syn::Token![,]>;
+    let Some(keyword) = list.path.get_ident() else {
+        return Ok(None);
+    };
 
-        macro_rules! parse_target {
-            ($target_literal:literal,$target:ident,$list:ident) => {
-                if $list.path.is_ident($target_literal) {
-                    let idents: Idents = $list.parse_args_with(Idents::parse_terminated)?;
-                    return Ok(idents.into_iter().map(ConvertTarget::$target).collect());
+    let idents = list.parse_args_with(Punctuated::<Ident, Token![,]>::parse_terminated)?;
+
+    let conversions = idents
+        .into_iter()
+        .flat_map(|ty| {
+            let mut convs = Vec::new();
+            match keyword.to_string().as_str() {
+                "from" => convs.push(Conversion {
+                    from: ty,
+                    to: self_ident.clone(),
+                }),
+                "into" => convs.push(Conversion {
+                    from: self_ident.clone(),
+                    to: ty,
+                }),
+                "from_into" => {
+                    convs.push(Conversion {
+                        from: ty.clone(),
+                        to: self_ident.clone(),
+                    });
+                    convs.push(Conversion {
+                        from: self_ident.clone(),
+                        to: ty,
+                    });
                 }
-            };
-        }
+                _ => {}
+            }
+            convs
+        })
+        .collect::<Vec<_>>();
 
-        parse_target!("from", From, list);
-        parse_target!("into", Into, list);
-        parse_target!("from_into", FromInto, list);
-
-        Err(syn::Error::new(list.span(), EXPECT_TARGET))
-    }
-
-    pub(crate) fn option_from_meta(meta: &Meta) -> syn::Result<Option<Vec<Self>>> {
-        macro_rules! parse_target {
-            ($target:literal) => {
-                if meta.path().is_ident($target) {
-                    return ConvertTarget::from_meta_list(meta.require_list()?).map(Some);
-                }
-            };
-        }
-
-        parse_target!("from");
-        parse_target!("into");
-        parse_target!("from_into");
-
+    if conversions.is_empty() {
         Ok(None)
+    } else {
+        Ok(Some(conversions))
     }
 }

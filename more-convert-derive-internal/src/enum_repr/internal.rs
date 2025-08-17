@@ -1,13 +1,14 @@
 use proc_macro2::TokenStream;
 use quote::format_ident;
+use syn::Ident;
 
-use super::{variant_arg::EnumReprDefault, EnumReprArg, EnumReprVariant};
+use super::{EnumReprArg, FinalVariantData};
 
 pub(crate) fn derive_enum_repr_internal(
     input: &syn::DeriveInput,
     enum_arg: EnumReprArg,
-    default: Option<EnumReprDefault>,
-    fields: Vec<EnumReprVariant>,
+    default: Option<&Ident>,
+    fields: Vec<FinalVariantData>,
     repr: TokenStream,
 ) -> syn::Result<TokenStream> {
     let ident = &input.ident;
@@ -18,13 +19,13 @@ pub(crate) fn derive_enum_repr_internal(
         .map(|v| {
             (
                 quote::format_ident!("{}_{}", ident, &v.ident),
-                (v.ident, v.discriminant.as_ref()),
+                (v.ident, &v.discriminant),
             )
         })
         .unzip();
 
     let to_repr = match default {
-        Some(EnumReprDefault(default_ident)) => quote::quote! {
+        Some(default_ident) => quote::quote! {
             impl #impl_generics From<#repr> for #ident #ty_generics #where_clause {
                 fn from(value: #repr) -> Self {
                     match value {
@@ -72,7 +73,7 @@ pub(crate) fn derive_enum_repr_internal(
 
     if enum_arg.serde {
         let impl_deserialize = match default {
-            Some(EnumReprDefault(_)) => quote::quote! {
+            Some(_) => quote::quote! {
                 impl<'de> serde::Deserialize<'de> for #ident {
                     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
                     where

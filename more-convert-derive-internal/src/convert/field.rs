@@ -6,57 +6,32 @@ use crate::{AttrMetas, MaybeOwned};
 
 use super::{
     field_arg::{ConvertFieldArg, ConvertFieldMap},
-    ConvertTarget, GenType,
+    target::{parse_field_conversion_meta, Conversion},
 };
 
 pub(crate) struct ConvertField<'a> {
     pub ident: &'a Ident,
     pub all: ConvertFieldArg,
-    pub target: HashMap<ConvertTarget, ConvertFieldArg>,
+    pub target: HashMap<Conversion, ConvertFieldArg>,
 }
 
 impl<'a> ConvertField<'a> {
-    pub(crate) fn get_arg_with_merge(
+    pub(crate) fn get_arg_for_conversion(
         &'a self,
-        gen_type: &GenType<'a>,
+        conversion: &Conversion,
     ) -> MaybeOwned<'a, ConvertFieldArg> {
-        macro_rules! get_merge {
-            ($target:expr,$merge:expr) => {
-                match self.target.get($target) {
-                    Some(target) => $merge.map(|v| MaybeOwned::Owned(v.merge(target))),
-                    None => $merge,
-                }
-            };
-        }
-
-        macro_rules! get {
-            ($target:expr) => {
-                match self.target.get($target) {
-                    Some(target) => MaybeOwned::Owned(target.merge(&self.all)),
-                    None => MaybeOwned::Borrowed(&self.all),
-                }
-            };
-        }
-
-        match gen_type {
-            GenType::From(ident) => {
-                let from = get!(&ConvertTarget::From((*ident).clone()));
-                get_merge!(&ConvertTarget::FromInto((*ident).clone()), from)
-            }
-            GenType::Into(ident) => {
-                let into = get!(&ConvertTarget::Into((*ident).clone()));
-                get_merge!(&ConvertTarget::FromInto((*ident).clone()), into)
-            }
+        match self.target.get(conversion) {
+            Some(target_arg) => MaybeOwned::Owned(self.all.merge(target_arg)),
+            None => MaybeOwned::Borrowed(&self.all),
         }
     }
 
-    pub(crate) fn from_field(field: &'a Field) -> syn::Result<Self> {
+    pub(crate) fn from_field(field: &'a Field, self_ident: &Ident) -> syn::Result<Self> {
         let Some(ref ident) = field.ident else {
             return Err(syn::Error::new(field.span(), "expected named field"));
         };
 
         let mut all: Option<ConvertFieldArg> = None;
-
         let mut target_arg = HashMap::new();
 
         for attr in &field.attrs {
@@ -74,12 +49,12 @@ impl<'a> ConvertField<'a> {
                 ));
             };
 
-            match ConvertTarget::option_from_meta(meta)? {
-                Some(targets) => {
+            match parse_field_conversion_meta(meta, self_ident)? {
+                Some(conversions) => {
                     iter.next();
                     let arg = ConvertFieldArg::from_meta_iter(&field.ty, iter)?;
-                    for target in targets {
-                        target_arg.insert(target, arg.clone());
+                    for conversion in conversions {
+                        target_arg.insert(conversion, arg.clone());
                     }
                 }
                 None => {
@@ -89,14 +64,11 @@ impl<'a> ConvertField<'a> {
             }
         }
 
-        let all = match all {
-            Some(all) => all,
-            None => ConvertFieldArg {
-                ignore: false,
-                map: ConvertFieldMap::gen_suffix(&field.ty),
-                rename: None,
-            },
-        };
+        let all = all.unwrap_or_else(|| ConvertFieldArg {
+            ignore: false,
+            map: ConvertFieldMap::gen_suffix(&field.ty),
+            rename: None,
+        });
 
         Ok(ConvertField {
             ident,

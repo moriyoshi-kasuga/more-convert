@@ -1,6 +1,4 @@
-use syn::{spanned::Spanned, Meta};
-
-use crate::parse_meta_attr;
+use syn::{parse::Parse, punctuated::Punctuated, spanned::Spanned, Meta, Token};
 
 #[derive(Default)]
 pub(crate) struct EnumReprArg {
@@ -8,24 +6,35 @@ pub(crate) struct EnumReprArg {
     pub implicit: bool,
 }
 
-impl EnumReprArg {
-    pub(crate) fn from_attr(attr: &syn::Attribute) -> syn::Result<Self> {
-        let mut option = EnumReprArg::default();
-        parse_meta_attr(attr, |meta| {
+impl Parse for EnumReprArg {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let metas = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
+        let mut arg = Self::default();
+        for meta in metas {
             match meta {
                 Meta::Path(path) if path.is_ident("serde") => {
-                    option.serde = true;
+                    if arg.serde {
+                        return Err(syn::Error::new(path.span(), "duplicate `serde` attribute"));
+                    }
+                    arg.serde = true;
                 }
                 Meta::Path(path) if path.is_ident("implicit") => {
-                    option.implicit = true;
+                    if arg.implicit {
+                        return Err(syn::Error::new(
+                            path.span(),
+                            "duplicate `implicit` attribute",
+                        ));
+                    }
+                    arg.implicit = true;
                 }
                 _ => {
-                    return Err(syn::Error::new(meta.span(), "unexpected attribute"));
+                    return Err(syn::Error::new(
+                        meta.span(),
+                        "unexpected attribute inside enum_repr, expected `serde` or `implicit`",
+                    ));
                 }
             };
-            Ok(())
-        })?;
-
-        Ok(option)
+        }
+        Ok(arg)
     }
 }
