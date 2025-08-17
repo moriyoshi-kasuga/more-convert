@@ -1,4 +1,11 @@
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
 
 pub use more_convert_derive::Convert;
 pub use more_convert_derive::EnumArray;

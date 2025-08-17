@@ -1,3 +1,11 @@
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
+
 macro_rules! use_internal {
     ($internal:path, $input:ident) => {
         $internal(syn::parse_macro_input!($input as syn::DeriveInput))

@@ -1,3 +1,11 @@
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::print_stdout,
+    clippy::print_stderr
+)]
+
 mod enum_repr;
 pub use enum_repr::derive_enum_repr;
 
