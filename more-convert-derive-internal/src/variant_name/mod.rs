@@ -42,7 +42,7 @@ pub fn derive_variant_name(input: syn::DeriveInput) -> syn::Result<TokenStream> 
                 None => quote::quote! { (_nested_variant_name) },
             };
             let expr = quote::quote! {
-                <#ty as ::more_convert::VariantName>::variant_name(_nested_variant_name)
+                <#ty as more_convert::VariantName>::variant_name(_nested_variant_name)
             };
             (matches, expr)
         } else {

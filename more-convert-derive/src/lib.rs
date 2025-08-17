@@ -42,6 +42,10 @@ macro_rules! use_internal {
 /// ## Normal
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::EnumRepr;
+/// #   include!("../../more-convert/src/enum_repr.rs");
+/// # }
 /// use more_convert::EnumRepr;
 /// #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 /// #[repr(u8)]
@@ -65,6 +69,10 @@ macro_rules! use_internal {
 /// ## serde
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::EnumRepr;
+/// #   include!("../../more-convert/src/enum_repr.rs");
+/// # }
 /// use more_convert::EnumRepr;
 /// #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 /// #[repr(u8)]
@@ -89,6 +97,10 @@ macro_rules! use_internal {
 /// ## implicit
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::EnumRepr;
+/// #   include!("../../more-convert/src/enum_repr.rs");
+/// # }
 /// use more_convert::EnumRepr;
 /// #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 /// #[repr(u8)]
@@ -113,6 +125,10 @@ macro_rules! use_internal {
 /// ## default
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::EnumRepr;
+/// #   include!("../../more-convert/src/enum_repr.rs");
+/// # }
 /// use more_convert::EnumRepr;
 /// #[derive(EnumRepr, Clone, Copy, Debug, PartialEq)]
 /// #[repr(u8)]
@@ -167,6 +183,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// ## Normal
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::Convert;
+/// # }
 /// use more_convert::Convert;
 /// #[derive(Convert)]
 /// #[convert(into(B))]
@@ -200,6 +219,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// ## Reanem
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::Convert;
+/// # }
 /// use more_convert::Convert;
 /// #[derive(Convert)]
 /// #[convert(into(B))]
@@ -224,6 +246,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// ## Map
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::Convert;
+/// # }
 /// use more_convert::Convert;
 /// #[derive(Convert)]
 /// #[convert(into(B))]
@@ -268,6 +293,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// ## from_into and filter
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::Convert;
+/// # }
 /// use more_convert::Convert;
 ///
 /// #[derive(Convert)]
@@ -293,6 +321,9 @@ pub fn derive_enum_repr(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// ## #[genearate]
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::Convert;
+/// # }
 /// use more_convert::Convert;
 ///
 /// #[derive(Convert)]
@@ -344,6 +375,10 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 /// ## Normal
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::VariantName;
+/// #   include!("../../more-convert/src/variant_name.rs");
+/// # }
 /// use more_convert::VariantName;
 ///
 /// #[derive(VariantName)]
@@ -359,6 +394,10 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 /// ## rename and rename_all
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::VariantName;
+/// #   include!("../../more-convert/src/variant_name.rs");
+/// # }
 /// use more_convert::VariantName;
 ///
 /// #[derive(VariantName)]
@@ -377,6 +416,10 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// ## prefix and suffix
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::VariantName;
+/// #   include!("../../more-convert/src/variant_name.rs");
+/// # }
 /// use more_convert::VariantName;
 ///
 /// #[derive(VariantName)]
@@ -392,6 +435,10 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// ## nest
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::VariantName;
+/// #   include!("../../more-convert/src/variant_name.rs");
+/// # }
 /// use more_convert::VariantName;
 ///
 /// #[derive(VariantName)]
@@ -411,12 +458,16 @@ pub fn derive_convert(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 ///
 /// assert_eq!("InvalidCode", TestVariantName::InvalidCode.variant_name());
 ///
-/// assert_eq!("InnerA", Inner::A.variant_name());
-/// assert_eq!("InnerB", Inner::B.variant_name());
+/// assert_eq!("InnerA", TestVariantName::Inner(Inner::A).variant_name());
+/// assert_eq!("InnerB", TestVariantName::Inner(Inner::B).variant_name());
 /// ```
 ///
 /// ## without_trait
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::VariantName;
+/// #   include!("../../more-convert/src/variant_name.rs");
+/// # }
 /// #[derive(more_convert::VariantName)]
 /// #[variant_name(without_trait)]
 /// pub enum Error {
@@ -460,6 +511,9 @@ pub fn derive_variant_name(input: proc_macro::TokenStream) -> proc_macro::TokenS
 /// ## Normal
 ///
 /// ```rust
+/// # mod more_convert {
+/// #   pub use more_convert_derive::EnumArray;
+/// # }
 /// use more_convert::EnumArray;
 /// #[derive(EnumArray, Clone, Copy, Debug, PartialEq)]
 /// pub enum Test {
