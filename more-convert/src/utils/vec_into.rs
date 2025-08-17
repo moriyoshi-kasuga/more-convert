@@ -4,7 +4,7 @@ pub trait VecInto<D> {
 
 impl<E, D> VecInto<D> for Vec<E>
 where
-    D: From<E>,
+    E: Into<D>,
 {
     #[inline]
     fn vec_into(self) -> Vec<D> {
