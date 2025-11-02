@@ -68,6 +68,9 @@ pub(crate) fn derive_enum_repr_internal(
             }
 
             #to_repr
+
+            impl #impl_generics more_convert::EnumRepr<#repr> for #ident #ty_generics #where_clause {
+            }
         };
     };
 

@@ -1,3 +1,5 @@
+pub trait EnumRepr<T: Copy>: TryFrom<T> + Into<T> {}
+
 #[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
 #[error("Failed to convert value {value} to enum {enum_name}")]
 pub struct TryFromEnumReprError {

@@ -23,6 +23,9 @@ pub fn main() {
     test(3, Test::Three);
     test(4, Test::Four);
 
+    fn require_enum_repr<T: EnumRepr<u16>>() {}
+    require_enum_repr::<Test>();
+
     assert_eq!(
         TryInto::<Test>::try_into(1u16).unwrap_err(),
         TryFromEnumReprError {
