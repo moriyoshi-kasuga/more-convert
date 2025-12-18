@@ -62,7 +62,12 @@ impl ConvertArgs {
                             to: ty,
                         });
                     }
-                    _ => unreachable!(), // Checked in Parse impl
+                    _ => {
+                        return Err(syn::Error::new(
+                            arg.keyword.span(),
+                            format!("unexpected keyword: {}", keyword)
+                        ));
+                    }
                 }
             }
         }
