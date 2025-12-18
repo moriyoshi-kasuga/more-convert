@@ -8,6 +8,31 @@ pub(crate) struct Conversion {
 
 const EXPECT_TARGET: &str = "expected `from`, `into` or `from_into`";
 
+/// Helper function to convert a keyword and type identifier into conversions
+fn keyword_to_conversions(keyword: &str, ty: Ident, self_ident: &Ident) -> Vec<Conversion> {
+    match keyword {
+        "from" => vec![Conversion {
+            from: ty,
+            to: self_ident.clone(),
+        }],
+        "into" => vec![Conversion {
+            from: self_ident.clone(),
+            to: ty,
+        }],
+        "from_into" => vec![
+            Conversion {
+                from: ty.clone(),
+                to: self_ident.clone(),
+            },
+            Conversion {
+                from: self_ident.clone(),
+                to: ty,
+            },
+        ],
+        _ => vec![],
+    }
+}
+
 // A single keyword argument, e.g., `from(A, B)`
 struct ConvertArg {
     keyword: Ident,
@@ -43,32 +68,14 @@ impl ConvertArgs {
         for arg in self.0 {
             let keyword = arg.keyword.to_string();
             for ty in arg.types {
-                match keyword.as_str() {
-                    "from" => conversions.push(Conversion {
-                        from: ty,
-                        to: self_ident.clone(),
-                    }),
-                    "into" => conversions.push(Conversion {
-                        from: self_ident.clone(),
-                        to: ty,
-                    }),
-                    "from_into" => {
-                        conversions.push(Conversion {
-                            from: ty.clone(),
-                            to: self_ident.clone(),
-                        });
-                        conversions.push(Conversion {
-                            from: self_ident.clone(),
-                            to: ty,
-                        });
-                    }
-                    _ => {
-                        return Err(syn::Error::new(
-                            arg.keyword.span(),
-                            format!("unexpected keyword: {}", keyword)
-                        ));
-                    }
+                let mut convs = keyword_to_conversions(&keyword, ty, self_ident);
+                if convs.is_empty() {
+                    return Err(syn::Error::new(
+                        arg.keyword.span(),
+                        format!("unexpected keyword: {}", keyword)
+                    ));
                 }
+                conversions.append(&mut convs);
             }
         }
         conversions.sort();
@@ -95,31 +102,7 @@ pub(crate) fn parse_field_conversion_meta(
 
     let conversions = idents
         .into_iter()
-        .flat_map(|ty| {
-            let mut convs = Vec::new();
-            match keyword.to_string().as_str() {
-                "from" => convs.push(Conversion {
-                    from: ty,
-                    to: self_ident.clone(),
-                }),
-                "into" => convs.push(Conversion {
-                    from: self_ident.clone(),
-                    to: ty,
-                }),
-                "from_into" => {
-                    convs.push(Conversion {
-                        from: ty.clone(),
-                        to: self_ident.clone(),
-                    });
-                    convs.push(Conversion {
-                        from: self_ident.clone(),
-                        to: ty,
-                    });
-                }
-                _ => {}
-            }
-            convs
-        })
+        .flat_map(|ty| keyword_to_conversions(&keyword.to_string(), ty, self_ident))
         .collect::<Vec<_>>();
 
     if conversions.is_empty() {
