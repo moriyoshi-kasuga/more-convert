@@ -11,7 +11,9 @@ pub(crate) fn require_named_field_struct(
         }) => Ok(fields),
         _ => Err(syn::Error::new_spanned(
             input,
-            "currently only structs with named fields are supported",
+            "this macro only supports structs with named fields.\n\
+            \n\
+            Example: `struct Foo { field: Type }`",
         )),
     }
 }
@@ -23,7 +25,7 @@ pub(crate) fn require_enum(
         syn::Data::Enum(syn::DataEnum { variants, .. }) => Ok(variants),
         _ => Err(syn::Error::new_spanned(
             input,
-            "currently only enums are supported",
+            "this macro only supports enums",
         )),
     }
 }
