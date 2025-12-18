@@ -58,8 +58,10 @@ fn validate_field_attributes(
                 return Err(syn::Error::new(
                     field.ident.span(),
                     format!(
-                        "field-level `convert` for `{} -> {}` is specified, but the struct-level `convert` is missing",
-                        conv.from, conv.to
+                        "field '{}' specifies `convert` for `{} -> {}`, but the struct-level attribute is missing.\n\
+                        \n\
+                        Help: Add `#[convert(from({}))]` or `#[convert(into({}))]` to the struct definition.",
+                        field.ident, conv.from, conv.to, conv.from, conv.to
                     ),
                 ));
             }

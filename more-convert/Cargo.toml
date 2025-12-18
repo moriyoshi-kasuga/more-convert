@@ -18,7 +18,7 @@ default = []
 utils = []
 
 [dependencies]
-more-convert-derive = { version = "0", path = "../more-convert-derive" }
+more-convert-derive.workspace = true
 
 thiserror.workspace = true
 

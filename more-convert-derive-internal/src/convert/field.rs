@@ -28,7 +28,12 @@ impl<'a> ConvertField<'a> {
 
     pub(crate) fn from_field(field: &'a Field, self_ident: &Ident) -> syn::Result<Self> {
         let Some(ref ident) = field.ident else {
-            return Err(syn::Error::new(field.span(), "expected named field"));
+            return Err(syn::Error::new(
+                field.span(),
+                "expected named field.\n\
+                \n\
+                The Convert macro only supports structs with named fields like `struct Foo {{ field: Type }}`"
+            ));
         };
 
         let mut all: Option<ConvertFieldArg> = None;

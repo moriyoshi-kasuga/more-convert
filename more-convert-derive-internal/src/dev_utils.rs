@@ -1,6 +1,11 @@
 use convert_case::Case;
 use syn::{meta::ParseNestedMeta, Type};
 
+/// Validates that the input is a struct with named fields.
+///
+/// # Errors
+///
+/// Returns an error if the input is not a struct with named fields.
 pub(crate) fn require_named_field_struct(
     input: &syn::DeriveInput,
 ) -> syn::Result<&syn::FieldsNamed> {
@@ -11,11 +16,18 @@ pub(crate) fn require_named_field_struct(
         }) => Ok(fields),
         _ => Err(syn::Error::new_spanned(
             input,
-            "currently only structs with named fields are supported",
+            "this macro only supports structs with named fields.\n\
+            \n\
+            Example: `struct Foo { field: Type }`",
         )),
     }
 }
 
+/// Validates that the input is an enum.
+///
+/// # Errors
+///
+/// Returns an error if the input is not an enum.
 pub(crate) fn require_enum(
     input: &syn::DeriveInput,
 ) -> syn::Result<&syn::punctuated::Punctuated<syn::Variant, syn::Token![,]>> {
@@ -23,19 +35,46 @@ pub(crate) fn require_enum(
         syn::Data::Enum(syn::DataEnum { variants, .. }) => Ok(variants),
         _ => Err(syn::Error::new_spanned(
             input,
-            "currently only enums are supported",
+            "this macro only supports enums",
         )),
     }
 }
 
+/// Checks if the given type is a `Vec<T>`.
+///
+/// # Examples
+///
+/// ```ignore
+/// use syn::{parse_quote, Type};
+/// let ty: Type = parse_quote!(Vec<u32>);
+/// assert!(is_vec(&ty));
+/// ```
 pub(crate) fn is_vec(ty: &Type) -> bool {
     is_type_eq_ident(ty, "Vec")
 }
 
+/// Checks if the given type is an `Option<T>`.
+///
+/// # Examples
+///
+/// ```ignore
+/// use syn::{parse_quote, Type};
+/// let ty: Type = parse_quote!(Option<String>);
+/// assert!(is_option(&ty));
+/// ```
 pub(crate) fn is_option(ty: &Type) -> bool {
     is_type_eq_ident(ty, "Option")
 }
 
+/// Checks if the last segment of a type path matches the given identifier.
+///
+/// # Examples
+///
+/// ```ignore
+/// use syn::{parse_quote, Type};
+/// let ty: Type = parse_quote!(std::vec::Vec<u32>);
+/// assert!(is_type_eq_ident(&ty, "Vec"));
+/// ```
 pub(crate) fn is_type_eq_ident<S: AsRef<str>>(ty: &Type, s: S) -> bool {
     match get_last_path_segment(ty) {
         Some(seg) => seg.ident == s,
@@ -43,6 +82,16 @@ pub(crate) fn is_type_eq_ident<S: AsRef<str>>(ty: &Type, s: S) -> bool {
     }
 }
 
+/// Extracts the last segment of a type path, if it exists.
+///
+/// # Examples
+///
+/// ```ignore
+/// use syn::{parse_quote, Type};
+/// let ty: Type = parse_quote!(std::vec::Vec<u32>);
+/// let segment = get_last_path_segment(&ty);
+/// assert_eq!(segment.unwrap().ident, "Vec");
+/// ```
 pub(crate) fn get_last_path_segment(ty: &Type) -> Option<&syn::PathSegment> {
     match ty {
         Type::Path(path) => path.path.segments.last(),
@@ -72,6 +121,16 @@ macro_rules! check_duplicate {
 
 pub(crate) use check_duplicate;
 
+/// Removes the `r#` prefix from raw identifiers.
+///
+/// # Examples
+///
+/// ```ignore
+/// use proc_macro2::Ident;
+/// use quote::format_ident;
+/// let ident = format_ident!("r#type");
+/// assert_eq!(unraw(&ident), "type");
+/// ```
 pub(crate) fn unraw(ident: &proc_macro2::Ident) -> String {
     ident.to_string().trim_start_matches("r#").to_owned()
 }
@@ -103,8 +162,8 @@ pub(crate) fn parse_nested_attr(
     Ok(())
 }
 
-pub(crate) fn from_str_to_case(text: &str) -> Option<Case> {
-    let case = match text {
+pub(crate) fn from_str_to_case(text: &str) -> Option<Case<'static>> {
+    Some(match text {
         "lowercase" => Case::Lower,
         "UPPERCASE" => Case::Upper,
         "PascalCase" => Case::Pascal,
@@ -113,8 +172,6 @@ pub(crate) fn from_str_to_case(text: &str) -> Option<Case> {
         "SCREAMING_SNAKE_CASE" => Case::UpperSnake,
         "kebab-case" => Case::Kebab,
         "SCREAMING-KEBAB-CASE" => Case::UpperKebab,
-        _ => return None,
-    };
-
-    Some(case)
+        _ => None?,
+    })
 }
