@@ -16,7 +16,7 @@ repository = "https://github.com/moriyoshi-kasuga/more-convert"
 license = "MIT"
 readme = "README.md"
 categories = ["development-tools"]
-keywords = ["macros", "utilties", "convert"]
+keywords = ["macros", "utilities", "convert"]
 
 [workspace.dependencies]
 more-convert-derive = { version = "0.15.0", path = "more-convert-derive" }
