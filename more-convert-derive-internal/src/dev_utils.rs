@@ -103,8 +103,8 @@ pub(crate) fn parse_nested_attr(
     Ok(())
 }
 
-pub(crate) fn from_str_to_case(text: &str) -> Option<Case> {
-    let case = match text {
+pub(crate) fn from_str_to_case(text: &str) -> Option<Case<'static>> {
+    Some(match text {
         "lowercase" => Case::Lower,
         "UPPERCASE" => Case::Upper,
         "PascalCase" => Case::Pascal,
@@ -113,8 +113,6 @@ pub(crate) fn from_str_to_case(text: &str) -> Option<Case> {
         "SCREAMING_SNAKE_CASE" => Case::UpperSnake,
         "kebab-case" => Case::Kebab,
         "SCREAMING-KEBAB-CASE" => Case::UpperKebab,
-        _ => return None,
-    };
-
-    Some(case)
+        _ => None?,
+    })
 }

@@ -18,7 +18,7 @@ mod kw {
 #[derive(Default)]
 pub(crate) struct VariantNameArgs {
     pub without_trait: Option<kw::without_trait>,
-    pub rename_all: Option<Case>,
+    pub rename_all: Option<Case<'static>>,
     pub prefix: Option<LitStr>,
     pub suffix: Option<LitStr>,
     pub rename: Option<LitStr>,
