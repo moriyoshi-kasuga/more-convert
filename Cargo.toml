@@ -7,7 +7,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.15.0"
+version = "0.16.0"
 edition = "2021"
 rust-version = "1.70"
 description = "This crate adds macros for various conversions."
@@ -19,8 +19,8 @@ categories = ["rust-patterns", "development-tools::procedural-macro-helpers"]
 keywords = ["macros", "utilities", "convert"]
 
 [workspace.dependencies]
-more-convert-derive = { version = "0.15.0", path = "more-convert-derive" }
-more-convert-derive-internal = { version = "0.15.0", path = "more-convert-derive-internal" }
+more-convert-derive = { version = "0.16.0", path = "more-convert-derive" }
+more-convert-derive-internal = { version = "0.16.0", path = "more-convert-derive-internal" }
 
 syn = "2.0"
 proc-macro2 = "1.0"
