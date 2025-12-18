@@ -6,9 +6,6 @@ members = [
   "more-convert-derive-internal",
 ]
 
-[patch.crates-io]
-more-convert = { path = "more-convert" }
-
 [workspace.package]
 version = "0.15.0"
 edition = "2021"
@@ -22,6 +19,9 @@ categories = ["development-tools"]
 keywords = ["macros", "utilties", "convert"]
 
 [workspace.dependencies]
+more-convert-derive = { version = "0.15.0", path = "more-convert-derive" }
+more-convert-derive-internal = { version = "0.15.0", path = "more-convert-derive-internal" }
+
 syn = "2.0"
 proc-macro2 = "1.0"
 quote = "1.0"

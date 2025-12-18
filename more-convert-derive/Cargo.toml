@@ -15,7 +15,7 @@ keywords.workspace = true
 proc-macro = true
 
 [dependencies]
-more-convert-derive-internal = { version = "0", path = "../more-convert-derive-internal" }
+more-convert-derive-internal.workspace = true
 
 syn.workspace = true
 
